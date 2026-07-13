@@ -53,7 +53,7 @@ CREATE TABLE budgets (
     UNIQUE (user_id, category_id, period)
 );
 
-CREATE TABLE ai_insight (
+CREATE TABLE ai_insights (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     insight_type VARCHAR(50) NOT NULL,
@@ -63,4 +63,4 @@ CREATE TABLE ai_insight (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_insight_user_created ON ai_insight (user_id, created_at DESC);
+CREATE INDEX idx_insight_user_created ON ai_insights (user_id, created_at DESC);
