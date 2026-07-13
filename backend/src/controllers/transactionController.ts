@@ -80,11 +80,11 @@ export const createTransaction = async (req: Request, res: Response) => {
             RETURNING *`,
       [
         req.userId,
-        categoryId || null,
+        categoryId,
         amount,
         type,
-        description || null,
-        notes || null,
+        description,
+        notes,
         transactionDate,
       ],
     );
