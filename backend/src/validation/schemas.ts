@@ -26,9 +26,9 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// Transaction Creation & Update Schema
-export const transactionSchema = z.object({
-  category_id: z.number().int("Category ID must be an integer"),
+// Transaction Creation Schema
+export const transactionCreateSchema = z.object({
+  categoryId: z.number().int("Category ID must be an integer"),
   amount: z.number().positive("Amount must be a positive number"),
   type: z.enum(["income", "expense"], {
     message: "Type must be income or expense",
@@ -39,12 +39,36 @@ export const transactionSchema = z.object({
     .optional()
     .nullable(),
   notes: z.string().optional().nullable(),
-  transaction_date: z
+  transactionDate: z
     .string()
     .regex(
       /^\d{4}-\d{2}-\d{2}$/,
       "Transaction date must be in YYYY-MM-DD format",
     ),
+});
+
+// Transaction Update Schema (all fields optional for partial update)
+export const transactionUpdateSchema = z.object({
+  categoryId: z.number().int("Category ID must be an integer").optional(),
+  amount: z.number().positive("Amount must be a positive number").optional(),
+  type: z
+    .enum(["income", "expense"], {
+      message: "Type must be income or expense",
+    })
+    .optional(),
+  description: z
+    .string()
+    .max(255, "Description must be at most 255 characters")
+    .optional()
+    .nullable(),
+  notes: z.string().optional().nullable(),
+  transactionDate: z
+    .string()
+    .regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      "Transaction date must be in YYYY-MM-DD format",
+    )
+    .optional(),
 });
 
 // Budget Creation & Update Schema
@@ -85,7 +109,8 @@ export const categoryUpdateSchema = categoryCreateSchema.omit({ type: true });
 // TypeScript Types inferred from Zod Schemas
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
-export type TransactionInput = z.infer<typeof transactionSchema>;
+export type TransactionCreateInput = z.infer<typeof transactionCreateSchema>;
+export type TransactionUpdateInput = z.infer<typeof transactionUpdateSchema>;
 export type BudgetInput = z.infer<typeof budgetSchema>;
 export type CategoryInputCreate = z.infer<typeof categoryCreateSchema>;
 export type CategoryInputUpdate = z.infer<typeof categoryUpdateSchema>;
