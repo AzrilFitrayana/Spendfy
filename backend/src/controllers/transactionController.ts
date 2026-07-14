@@ -99,6 +99,8 @@ export const createTransaction = async (req: Request, res: Response) => {
     const { categoryId, amount, type, description, notes, transactionDate } =
       validate(transactionCreateSchema, req.body);
 
+      
+
     const result = await pool.query(
       `INSERT INTO transactions (user_id, category_id, amount, type, description, notes, transaction_date)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
