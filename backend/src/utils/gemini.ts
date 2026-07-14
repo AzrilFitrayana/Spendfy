@@ -3,11 +3,11 @@ import { GoogleGenAI } from "@google/genai";
 
 dotenv.config();
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY is not set, AI features will not work");
 }
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface MonthlyInsightInput {
   totalIncome: number;
@@ -28,7 +28,11 @@ interface BudgetAlertInput {
 }
 
 interface SavingsTipsInput {
-  topCategories: { category: string; amount: number; transactionCount: number }[];
+  topCategories: {
+    category: string;
+    amount: number;
+    transactionCount: number;
+  }[];
   monthlyIncome: number;
   currency?: string;
 }
@@ -58,7 +62,13 @@ interface BudgetListInput {
   currency?: string;
 }
 
-// helper to clear json from markdown code blocks
+/**
+ * Strip surrounding Markdown code fences (```json / ```) from a model response.
+ *
+ * Gemini occasionally wraps JSON in Markdown fences despite being instructed not
+ * to. Removing them before JSON.parse avoids parse failures on otherwise valid
+ * output, so callers can rely on receiving clean JSON.
+ */
 const stripMarkdown = (text: string | undefined) => {
   let cleaned = (text ?? "").trim();
   if (cleaned.startsWith("```json")) {
@@ -69,6 +79,26 @@ const stripMarkdown = (text: string | undefined) => {
   return cleaned.trim();
 };
 
+/**
+ * Generate an AI-powered monthly financial insight.
+ *
+ * Aggregates the user's current-month income/expense, category breakdown, and
+ * recent monthly trend into a single prompt and asks the Gemini model to return
+ * structured JSON describing financial health, highlights, concerns, and
+ * recommendations. Requesting JSON (rather than prose) lets the API persist and
+ * render the insight consistently across clients.
+ *
+ * @param input - Monthly financial context for the insight.
+ * @param input.totalIncome - Total income for the current month.
+ * @param input.totalExpense - Total expense for the current month.
+ * @param input.savingsRate - Calculated savings rate as a percentage.
+ * @param input.expenseBreakdown - Per-category expense totals for the month.
+ * @param input.previousMonths - Trailing monthly income/expense for trend context.
+ * @param input.currency - ISO currency code used to format amounts (defaults to IDR).
+ * @returns Parsed JSON with `summary`, `highlights`, `concerns`, `recommendations`,
+ *          `topSpendingCategory`, `estimatedMonthlySavings`, and `healthScore`.
+ * @throws Error if the Gemini API call fails or returns unparseable JSON.
+ */
 export const generateMonthlyInsight = async ({
   totalIncome,
   totalExpense,
@@ -138,7 +168,26 @@ export const generateMonthlyInsight = async ({
   }
 };
 
-// Generate Bugdet Alert
+/**
+ * Generate a budget alert for a single category.
+ *
+ * Compares the spent amount against the budget limit and passes the percentage
+ * used plus the remaining days in the period to Gemini, which classifies severity
+ * and returns an empathetic message. Pre-computing the percentage (instead of
+ * asking the model to compute it) keeps the severity thresholds deterministic and
+ * aligned with the documented 70% / 100% guide.
+ *
+ * @param input - Budget alert context.
+ * @param input.categoryName - Name of the budgeted category.
+ * @param input.budgetAmount - Total budget limit for the period.
+ * @param input.spentAmount - Amount already spent in the period.
+ * @param input.daysIntoPeriod - Number of days elapsed in the period.
+ * @param input.totalPeriodDays - Total length of the period in days.
+ * @param input.currency - ISO currency code (defaults to IDR).
+ * @returns Parsed JSON with `severity` ("info"|"warning"|"critical"), `title`,
+ *          `message`, and a `suggestions` array.
+ * @throws Error if the Gemini API call fails or returns unparseable JSON.
+ */
 export const generateBudgetAlert = async ({
   categoryName,
   budgetAmount,
@@ -154,7 +203,7 @@ export const generateBudgetAlert = async ({
     
     Category: ${categoryName}
     Budget: ${currency} ${budgetAmount.toFixed(2)}
-    Spen so far: ${currency} ${spentAmount.toFixed(2)}
+    Spen so far: ${currency} ${spentAmount.toFixed(2)} (${percentUsed}% used)
     Days into period: ${daysIntoPeriod} of ${totalPeriodDays} (${daysLeft} days remaining)
 
     Return ONLY valid JSON (no markdown)
@@ -184,7 +233,22 @@ export const generateBudgetAlert = async ({
   }
 };
 
-// Saving Tips
+/**
+ * Generate personalized savings tips based on top spending categories.
+ *
+ * Sends the user's last-30-day income and highest spending categories to Gemini
+ * and requests exactly four actionable tips, each tied to a real category with a
+ * realistic estimated monthly saving. The fixed tip count keeps the response
+ * predictable for UI rendering and prevents the model from over-producing.
+ *
+ * @param input - Savings tips context.
+ * @param input.topCategories - Highest spending categories with amount and count.
+ * @param input.monthlyIncome - Total income over the last 30 days.
+ * @param input.currency - ISO currency code (defaults to IDR).
+ * @returns Parsed JSON with `overallTip` and a `tips` array (category, title,
+ *          detail, estimatedSavings).
+ * @throws Error if the Gemini API call fails or returns unparseable JSON.
+ */
 export const generateSavingsTips = async ({
   topCategories,
   monthlyIncome,
@@ -235,7 +299,21 @@ export const generateSavingsTips = async ({
   }
 };
 
-// Analyze transaction
+/**
+ * Analyze a list of transactions and return a concise spending insight.
+ *
+ * Formats up to the first five transactions into a compact prompt (capping input
+ * size keeps latency and token cost low) and asks Gemini for a short analysis plus
+ * a one-phrase highlight. Dates are normalized to YYYY-MM-DD so the model sees a
+ * consistent format regardless of how the database returns them.
+ *
+ * @param input - Transaction analysis input.
+ * @param input.transactions - Transactions to analyze (only the first 5 are sent).
+ * @param input.currency - ISO currency code (defaults to IDR).
+ * @returns Parsed JSON with `insight` (free-text analysis) and `highlight`
+ *          (short key-takeaway phrase).
+ * @throws Error if the Gemini API call fails or returns unparseable JSON.
+ */
 export const analyzeTransactionList = async ({
   transactions,
   currency = "IDR",
@@ -246,6 +324,7 @@ export const analyzeTransactionList = async ({
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`
     }
     return String(d).split("T")[0];
   };
@@ -284,8 +363,25 @@ export const analyzeTransactionList = async ({
   }
 };
 
-// Analyze budget
-export const analyzeBudgetList = async ({ budgets, currency = "IDR" }: BudgetListInput) => {
+/**
+ * Analyze a user's budgets and flag any at risk of being exceeded.
+ *
+ * Formats each budget with its spent/limit percentage and asks Gemini to classify
+ * every budget as "good", "caution", or "concerning" with a friendly message.
+ * Pre-computing the percentage ensures severity classification matches the
+ * documented thresholds exactly.
+ *
+ * @param input - Budget analysis input.
+ * @param input.budgets - Budgets with id, amount, spent, and category_name.
+ * @param input.currency - ISO currency code (defaults to IDR).
+ * @returns Parsed JSON with an `analyses` array, each entry containing `budgetId`,
+ *          `status`, and `message`.
+ * @throws Error if the Gemini API call fails or returns unparseable JSON.
+ */
+export const analyzeBudgetList = async ({
+  budgets,
+  currency = "IDR",
+}: BudgetListInput) => {
   const lines = budgets
     .map((b) => {
       const spent = parseFloat(String(b.spent));

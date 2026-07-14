@@ -10,7 +10,20 @@ const signToken = (userId: string) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: "7d" });
 };
 
-// Register
+/**
+ * Register a new user and seed their default categories.
+ *
+ * Validates the incoming payload, rejects duplicate emails, and creates the user
+ * inside a transaction. Seeding `defaultCategories` per user (rather than relying
+ * on shared rows) keeps category ownership scoped and enables safe cascade deletes
+ * when a user is removed. A JWT is issued on success so the client can authenticate
+ * immediately without a separate login.
+ *
+ * @param req - Express request. Body must satisfy `registerSchema`.
+ * @param res - Express response.
+ * @returns 201 with the created user and a signed JWT, or 400/500 on failure.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const register = async (req: Request, res: Response) => {
   const client = await pool.connect();
 
@@ -64,7 +77,18 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-// Login
+/**
+ * Authenticate a user and return a signed JWT.
+ *
+ * Verifies the email exists and the bcrypt password hash matches, then issues a
+ * 7-day JWT. Credentials are intentionally not differentiated ("Invalid
+ * credentials" for both cases) to avoid leaking whether an email is registered.
+ *
+ * @param req - Express request. Body must satisfy `loginSchema`.
+ * @param res - Express response.
+ * @returns 200 with the user (id, name, email, currency) and a JWT, or 400/500.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = validate(loginSchema, req.body);
@@ -101,7 +125,18 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-// Get Data
+/**
+ * Fetch the authenticated user's profile.
+ *
+ * Reads the `userId` attached by the auth middleware (not a path param) so a user
+ * can only retrieve their own record. Keeps the response payload minimal by
+ * excluding the password hash.
+ *
+ * @param req - Express request. Requires `req.userId` from auth middleware.
+ * @param res - Express response.
+ * @returns 200 with the user row, 404 if missing, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const getUser = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(

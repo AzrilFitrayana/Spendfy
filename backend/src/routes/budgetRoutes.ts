@@ -15,7 +15,7 @@ router.use(protect);
 
 router.get("/", getBudgets);
 router.post("/", createBudget);
-router.post("/analyze", analyzeBudgets);
+router.get("/analyze", analyzeBudgets);
 
 router.put("/:id", updateBudget);
 router.delete("/:id", deleteBudget);

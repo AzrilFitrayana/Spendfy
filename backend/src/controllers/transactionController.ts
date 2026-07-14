@@ -7,7 +7,21 @@ import {
 } from "../validation/schemas.js";
 import { analyzeTransactionList } from "../utils/gemini.js";
 
-// Get
+/**
+ * List a user's transactions with filtering, search, and pagination.
+ *
+ * Builds the WHERE clause dynamically from the provided query params (date range,
+ * category, type, free-text search across description/notes) so a single endpoint
+ * powers list, filter, and search views. Parameter indexes are shifted as filters
+ * are appended, and `limit`/`offset` are always bound last for safe pagination.
+ * Transactions are joined to their category for display metadata.
+ *
+ * @param req - Express request. Query may include startDate, endDate, categoryId,
+ *              type, search, limit, offset.
+ * @param res - Express response.
+ * @returns 200 with matching transaction rows, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const getTransactions = async (req: Request, res: Response) => {
   try {
     const {
@@ -69,7 +83,17 @@ export const getTransactions = async (req: Request, res: Response) => {
   }
 };
 
-// Create
+/**
+ * Create a transaction for the authenticated user.
+ *
+ * Validates the payload via `transactionCreateSchema` before insert; amounts and
+ * types are enforced there so the DB only ever receives well-formed rows.
+ *
+ * @param req - Express request. Body must satisfy `transactionCreateSchema`.
+ * @param res - Express response.
+ * @returns 201 with the created transaction, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const createTransaction = async (req: Request, res: Response) => {
   try {
     const { categoryId, amount, type, description, notes, transactionDate } =
@@ -96,7 +120,17 @@ export const createTransaction = async (req: Request, res: Response) => {
   }
 };
 
-// Get ID
+/**
+ * Fetch a single transaction by id, including category metadata.
+ *
+ * Ownership is enforced by matching both `id` and `user_id`, so one user cannot
+ * read another's transaction even with a guessed id.
+ *
+ * @param req - Express request. `id` path param.
+ * @param res - Express response.
+ * @returns 200 with the transaction, 404 if not found, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const getTransactionById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -123,7 +157,19 @@ export const getTransactionById = async (req: Request, res: Response) => {
   }
 };
 
-// Update
+/**
+ * Patch a transaction's fields.
+ *
+ * Validation runs first (and rejects unknown/empty bodies), then only the supplied
+ * fields are added to the SET list via `COALESCE`, so partial updates never blank
+ * unsent values. Ownership is enforced by the `user_id` clause.
+ *
+ * @param req - Express request. `id` path param; body must satisfy `transactionUpdateSchema`.
+ * @param res - Express response.
+ * @returns 200 with the updated transaction, 400 on empty update, 404 if not found,
+ *          or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const updateTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -181,7 +227,17 @@ export const updateTransaction = async (req: Request, res: Response) => {
   }
 };
 
-// Delete
+/**
+ * Delete a transaction owned by the user.
+ *
+ * Uses `RETURNING id` and checks `rowCount` so a missing or non-owned row yields a
+ * clean 404 instead of a false success.
+ *
+ * @param req - Express request. `id` path param.
+ * @param res - Express response.
+ * @returns 200 on success, 404 if not found, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -201,6 +257,20 @@ export const deleteTransaction = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Analyze a subset of the user's transactions via AI.
+ *
+ * Validates that `transactionIds` is a non-empty array, caps it at 50 to bound
+ * model cost, loads the matching transactions (joined to category), and forwards
+ * them to `analyzeTransactionList`. Using `ANY($2::int[])` fetches all rows in one
+ * query and keeps the lookup ownership-scoped by `user_id`.
+ *
+ * @param req - Express request. Body: `{ transactionIds: number[] }`.
+ * @param res - Express response.
+ * @returns 200 with the analysis, 400 on invalid input or no matching rows,
+ *          or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const analyzeTransactions = async (req: Request, res: Response) => {
   const { transactionIds } = req.body;
 

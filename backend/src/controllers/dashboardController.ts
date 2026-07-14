@@ -1,12 +1,37 @@
 import type { Request, Response } from "express";
 import pool from "../db.js";
 
+/**
+ * Compute percentage change between two periods.
+ *
+ * Returns 100 when moving from zero to a non-zero value (a meaningful "new"
+ * signal) and 0 when both are zero, avoiding divide-by-zero and giving the UI a
+ * stable basis for trend arrows.
+ *
+ * @param current - Current period value.
+ * @param previous - Previous period value.
+ * @returns Percentage delta (can be negative).
+ */
 const pctChange = (current: number, previous: number): number => {
   if (previous === 0) return current === 0 ? 0 : 100;
   return ((current - previous) / previous) * 100;
 };
 
-// Summary
+/**
+ * Return the user's financial summary for the current and previous month.
+ *
+ * Uses a single CTE that buckets income/expense by month, then pivots the current
+ * and prior month into one row via conditional aggregation. Computing both months
+ * in one query (rather than two round-trips) keeps the endpoint fast. Derived
+ * fields `balance` and `savingsRate` are calculated in app code from the raw
+ * totals so the client receives ready-to-render numbers.
+ *
+ * @param req - Express request. Requires `req.userId` from auth middleware.
+ * @param res - Express response.
+ * @returns 200 with income/expense totals, balance, savingsRate, and month-over-month
+ *          deltas, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const getSummary = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
@@ -57,7 +82,18 @@ export const getSummary = async (req: Request, res: Response) => {
   }
 };
 
-// Get category breakdown
+/**
+ * Return expense totals per category for the current month.
+ *
+ * Aggregates only `expense` transactions since the current month start and joins
+ * category metadata for display. Ordering by total descending lets the client
+ * render the biggest spend categories first without additional sorting.
+ *
+ * @param req - Express request. Requires `req.userId` from auth middleware.
+ * @param res - Express response.
+ * @returns 200 with per-category rows (total, transaction_count, metadata), or 500.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const getCategoryBreakdown = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
@@ -85,7 +121,18 @@ export const getCategoryBreakdown = async (req: Request, res: Response) => {
   }
 };
 
-// Get Monthly Trend
+/**
+ * Return monthly income/expense totals for the last six months.
+ *
+ * Truncates each transaction date to its month and sums income/expense per month,
+ * covering the current month plus the five prior (via INTERVAL '5 month') to give
+ * the UI a full trend chart. `to_char` produces stable "YYYY-MM" bucket keys.
+ *
+ * @param req - Express request. Requires `req.userId` from auth middleware.
+ * @param res - Express response.
+ * @returns 200 with one row per month (month, income, expense), or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const getMonthlyTrend = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(

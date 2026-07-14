@@ -39,6 +39,16 @@ interface BudgetAlertRow {
   category_name: string;
 }
 
+/**
+ * Look up the authenticated user's display currency.
+ *
+ * Centralizes currency resolution so all insight builders return amounts in the
+ * user's preferred ISO code. Falls back to "IDR" when unset so downstream prompts
+ * still format sensibly.
+ *
+ * @param userId - Authenticated user id.
+ * @returns The user's currency code, or "IDR" as a fallback.
+ */
 const getUserCurrency = async (userId: string | undefined): Promise<string> => {
   const result = await pool.query("SELECT currency FROM users WHERE id = $1", [
     userId,
@@ -46,6 +56,18 @@ const getUserCurrency = async (userId: string | undefined): Promise<string> => {
   return result.rows[0]?.currency || "IDR";
 };
 
+/**
+ * List the user's stored AI insights, newest first.
+ *
+ * Reads from `ai_insights` (the table created via migration) so the client can
+ * show previously generated insights without re-calling the model. Capped at 50
+ * rows to bound payload size for the history view.
+ *
+ * @param req - Express request. Requires `req.userId` from auth middleware.
+ * @param res - Express response.
+ * @returns 200 with insight rows, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const getInsigths = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
@@ -59,6 +81,19 @@ export const getInsigths = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Build the data payload for a monthly summary insight.
+ *
+ * Runs three CTEs in one query (current month totals, current-month category
+ * breakdown, and the prior three months' trend), then asks Gemini to produce the
+ * insight. Aggregating in SQL keeps the prompt compact; the period start/end are
+ * derived from the current month so the stored insight can be grouped by month
+ * later.
+ *
+ * @param userId - Authenticated user id.
+ * @returns The generated insight content plus `periodStart`/`periodEnd` strings.
+ * @throws Error if no monthly data is available or the model call fails.
+ */
 const buildMonthlyInsight = async (userId: string | undefined) => {
   const data = await pool.query<MonthlyInsightRow>(
     `
@@ -132,9 +167,23 @@ const buildMonthlyInsight = async (userId: string | undefined) => {
   return { content, periodStart, periodEnd }
 }
 
+/**
+ * Build the data payload for savings tips.
+ *
+ * Finds the user's top five expense categories over the last 30 days and their
+ * last-30-day income, then asks Gemini for tips. The 30-day window (rather than
+ * calendar month) makes tips feel timely regardless of when the user asks.
+ *
+ * @param userId - Authenticated user id.
+ * @returns The generated tips content plus null period bounds (always current).
+ * @throws Error if the model call fails.
+ */
 const buildSavingsTips = async (userId: string | undefined) => {
     const top = await pool.query<TopCategoryRow>(
-        `SELECT c.name AS category, SUM(t.amount) AS amount, COUNT(t.id) AS count
+        `SELECT 
+            c.name AS category,
+            SUM(t.amount) AS amount,
+            COUNT(t.id) AS count
          FROM transactions t
          JOIN categories c ON c.id = t.category_id
          WHERE t.user_id = $1
@@ -171,13 +220,29 @@ const buildSavingsTips = async (userId: string | undefined) => {
     return { content, periodStart: null, periodEnd: null }
 }
 
+/**
+ * Build the data payload for a single-category budget alert.
+ *
+ * Loads the budget and its month-to-date spent (computed in SQL) for the requested
+ * category, then asks Gemini for an alert. Requiring `categoryId` keeps the alert
+ * scoped; if the budget is missing a clear error is thrown so the caller returns
+ * 500 rather than persisting a broken insight.
+ *
+ * @param userId - Authenticated user id.
+ * @param categoryId - Category whose budget should be alerted on.
+ * @returns The generated alert content plus null period bounds.
+ * @throws Error if `categoryId` is missing, the budget isn't found, or the model
+ *         call fails.
+ */
 const buildBudgetAlert = async (userId: string | undefined, categoryId: string | undefined) => {
     if (!categoryId) {
         throw new Error('Category ID is required');
     }
 
     const budgetRow = await pool.query<BudgetAlertRow>(
-        `SELECT b.*, c.name AS category_name
+        `SELECT 
+            b.*, 
+            c.name AS category_name,
             COALESCE((
                 SELECT SUM(amount) FROM transactions
                 WHERE user_id = b.user_id
@@ -199,6 +264,7 @@ const buildBudgetAlert = async (userId: string | undefined, categoryId: string |
     if (!b) {
         throw new Error("Budget not found for category");
     }
+
     const now = new Date()
     const daysIntoPeriod = now.getDate()
     const totalPeriodDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
@@ -216,6 +282,21 @@ const buildBudgetAlert = async (userId: string | undefined, categoryId: string |
     return { content, periodStart: null, periodEnd: null }
 }
 
+/**
+ * Generate and persist an AI insight of a given type.
+ *
+ * Routes on the `type` body field to the appropriate builder (`monthly_summary`,
+ * `savings_tips`, or `budget_alert`), asks the model for content, and stores the
+ * result in `ai_insights` so it can be re-served without re-calling Gemini. The
+ * generated `content_json` is stored as-is; persisting raw JSON avoids re-parsing
+ * and lets the client render structured insight cards directly.
+ *
+ * @param req - Express request. Body: `{ type, categoryId? }`.
+ * @param res - Express response.
+ * @returns 201 with the stored insight row, 400 on invalid/missing type or
+ *          missing categoryId for budget alerts, or 500 on generation/storage error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const generateInsight = async (req: Request, res: Response) => {
     const {type, categoryId} = req.body;
 

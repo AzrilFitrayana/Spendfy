@@ -6,7 +6,17 @@ import {
   categoryUpdateSchema,
 } from "../validation/schemas.js";
 
-// Get
+/**
+ * List a user's categories ordered for display.
+ *
+ * Returns both income and expense categories ordered by type then name, so the
+ * client can group them without further sorting. Scoped strictly by `user_id`.
+ *
+ * @param req - Express request. Requires `req.userId` from auth middleware.
+ * @param res - Express response.
+ * @returns 201 with category rows, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const getCategories = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
@@ -21,7 +31,18 @@ export const getCategories = async (req: Request, res: Response) => {
   }
 };
 
-// Create
+/**
+ * Create a custom (non-default) category for the user.
+ *
+ * The unique (user_id, name, type) constraint blocks duplicate names of the same
+ * type; the caught 23505 error is surfaced as a 400. `is_default` is always false
+ * here because seeded defaults are created elsewhere (registration).
+ *
+ * @param req - Express request. Body must satisfy `categoryCreateSchema`.
+ * @param res - Express response.
+ * @returns 201 with the created category, 400 on duplicate, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const createCategory = async (req: Request, res: Response) => {
   try {
     const { name, type, icon, color } = validate(
@@ -48,7 +69,17 @@ export const createCategory = async (req: Request, res: Response) => {
   }
 };
 
-// Update
+/**
+ * Update a category's name, icon, or color.
+ *
+ * Uses `COALESCE` per field so callers may patch a subset of attributes without
+ * nulling the others. Ownership is enforced via the `user_id` clause.
+ *
+ * @param req - Express request. `id` path param; body must satisfy `categoryUpdateSchema`.
+ * @param res - Express response.
+ * @returns 200 with the updated category, 404 if not found, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const updateCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -75,7 +106,18 @@ export const updateCategory = async (req: Request, res: Response) => {
   }
 };
 
-// Delete
+/**
+ * Delete a category owned by the user.
+ *
+ * Transactions referencing this category are kept (their `category_id` is set to
+ * NULL via the FK `ON DELETE SET NULL`), preserving history while removing the
+ * category from active selection.
+ *
+ * @param req - Express request. `id` path param.
+ * @param res - Express response.
+ * @returns 200 on success, 404 if not found, or 500 on error.
+ * @throws Never propagates; errors are caught and mapped to a 500 response.
+ */
 export const deleteCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
