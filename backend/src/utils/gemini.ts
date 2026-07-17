@@ -18,6 +18,14 @@ interface MonthlyInsightInput {
   currency?: string;
 }
 
+interface WeeklyInsightInput {
+  totalIncome: number;
+  totalExpense: number;
+  expenseBreakdown: { category: string; amount: number }[];
+  previousWeeks: { week: string; income: number; expense: number }[];
+  currency?: string;
+}
+
 interface BudgetAlertInput {
   categoryName: string;
   budgetAmount: number;
@@ -165,6 +173,96 @@ export const generateMonthlyInsight = async ({
   } catch (error) {
     console.error("Gemini API error (monthly insight): ", error);
     throw new Error("Failed to generate monthly insight. Please try again");
+  }
+};
+
+/**
+ * Generate an AI-powered weekly financial insight.
+ *
+ * Mirrors generateMonthlyInsight but scoped to the current week.
+ * Sends income/expense totals, category breakdown, and prior-week
+ * trend to Gemini and returns structured JSON for the client to render.
+ *
+ * @param input - Weekly financial context for the insight.
+ * @param input.totalIncome - Total income for the current week.
+ * @param input.totalExpense - Total expense for the current week.
+ * @param input.expenseBreakdown - Per-category expense totals for the week.
+ * @param input.previousWeeks - Trailing weekly income/expense for trend context.
+ * @param input.currency - ISO currency code (defaults to IDR).
+ * @returns Parsed JSON with `summary`, `highlights`, `concerns`, `recommendations`,
+ *          `topSpendingCategory`, `estimatedWeeklySavings`, and `healthScore`.
+ * @throws Error if the Gemini API call fails or returns unparseable JSON.
+ */
+export const generateWeeklyInsight = async ({
+  totalIncome,
+  totalExpense,
+  expenseBreakdown,
+  previousWeeks,
+  currency = "IDR",
+}: WeeklyInsightInput) => {
+  const breakdownText =
+    expenseBreakdown.length > 0
+      ? expenseBreakdown
+          .map((c) => `- ${c.category}: ${currency} ${c.amount.toFixed(2)}`)
+          .join("\n")
+      : "- No expense recorded yet";
+
+  const trendText =
+    previousWeeks.length > 0
+      ? previousWeeks
+          .map(
+            (w) =>
+              `- ${w.week}: Income ${currency} ${w.income.toFixed(2)}, Expense ${currency} ${w.expense.toFixed(2)}`,
+          )
+          .join("\n")
+      : "- No previous week data available";
+
+  const savingsRate =
+    totalIncome > 0
+      ? (((totalIncome - totalExpense) / totalIncome) * 100).toFixed(1)
+      : "0.0";
+
+  const prompt = `Analyze this user's weekly financial data and generate actionable insights.
+
+    Currency: ${currency}
+    Total Income (this week): ${currency} ${totalIncome.toFixed(2)}
+    Total Expense (this week): ${currency} ${totalExpense.toFixed(2)}
+    Savings Rate: ${savingsRate}%
+
+    Expense breakdown by category (this week):
+    ${breakdownText}
+
+    Previous weeks trend:
+    ${trendText}
+
+    Return ONLY valid JSON (no markdown, no commentary) in this exact structure:
+    {
+        "summary": "2-3 sentence summary of the user's financial health this week",
+        "highlights": ["Positive observation 1", "Positive observation 2"],
+        "concerns": ["Concern 1", "Concern 2"],
+        "recommendations": [
+            {"title": "Short title", "detail": "Actionable suggestion (1-2 sentences)"}
+        ],
+        "topSpendingCategory": "Category name or null",
+        "estimatedWeeklySavings": number,
+        "healthScore": number
+    }
+
+    Constraints:
+    - "healthScore" must be an integer between 0 and 100
+    - Provide 3 recommendations.
+    - Reference actual numbers from the data. Tone: friendly but honest.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+    });
+    const cleaned = stripMarkdown(response.text);
+    return JSON.parse(cleaned);
+  } catch (error) {
+    console.error("Gemini API error (weekly insight): ", error);
+    throw new Error("Failed to generate weekly insight. Please try again");
   }
 };
 
@@ -430,6 +528,7 @@ export const analyzeBudgetList = async ({
 
 export default {
   generateMonthlyInsight,
+  generateWeeklyInsight,
   generateBudgetAlert,
   generateSavingsTips,
   analyzeTransactionList,

@@ -23,12 +23,12 @@ const pctChange = (current: number, previous: number): number => {
  * Uses a single CTE that buckets income/expense by month, then pivots the current
  * and prior month into one row via conditional aggregation. Computing both months
  * in one query (rather than two round-trips) keeps the endpoint fast. Derived
- * fields `balance` and `savingsRate` are calculated in app code from the raw
+ * fields `netRemaining` and `savingsRate` are calculated in app code from the raw
  * totals so the client receives ready-to-render numbers.
  *
  * @param req - Express request. Requires `req.userId` from auth middleware.
  * @param res - Express response.
- * @returns 200 with income/expense totals, balance, savingsRate, and month-over-month
+ * @returns 200 with income/expense totals, netRemaining, savingsRate, and month-over-month
  *          deltas, or 500 on error.
  * @throws Never propagates; errors are caught and mapped to a 500 response.
  */
@@ -64,14 +64,14 @@ export const getSummary = async (req: Request, res: Response) => {
     const expenseThisMonth = parseFloat(row.expense_this_month);
     const incomeLastMonth = parseFloat(row.income_last_month);
     const expenseLastMonth = parseFloat(row.expense_last_month);
-    const balance = incomeThisMonth - expenseThisMonth;
+    const netRemaining = incomeThisMonth - expenseThisMonth;
     const savingsRate =
-      incomeThisMonth > 0 ? (balance / incomeThisMonth) * 100 : 0;
+      incomeThisMonth > 0 ? (netRemaining / incomeThisMonth) * 100 : 0;
 
     res.status(200).json({
       incomeThisMonth,
       expenseThisMonth,
-      balance,
+      netRemaining,
       savingsRate,
       incomeDelta: pctChange(incomeThisMonth, incomeLastMonth),
       expenseDelta: pctChange(expenseThisMonth, expenseLastMonth),
