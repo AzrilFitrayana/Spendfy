@@ -28,17 +28,17 @@ export const metadata: Metadata = {
     'finance',
     'spendfy'
   ],
-  applicationSiteName: SITE_NAME,
-  author: [{ name: 'Muhammad Azril Fitrayana', url: '' }],
-  robots: [{
+  applicationName: SITE_NAME,
+  authors: [{ name: 'Muhammad Azril Fitrayana', url: '' }],
+  robots: {
     index: true,
     follow: true
-  }],
-  appleWebApp: [{
+  },
+  appleWebApp: {
     capable: true,
     title: SITE_NAME,
     statusBarStyle: 'black-translucent'
-  }],
+  },
   openGraph: {
     type: 'website',
     locale: 'id_ID',
