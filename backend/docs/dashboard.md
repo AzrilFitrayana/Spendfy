@@ -1,22 +1,22 @@
-### Dashboard API SPEC
+### Spesifikasi API Dashboard
 
-All endpoints require Bearer Token (JWT) and are scoped to the authenticated user. Read-only aggregations over transactions.
+Seluruh endpoint membutuhkan Bearer Token (JWT) dan dibatasi pada pengguna yang terautentikasi. Agregasi hanya-baca dari transaksi.
 
-## Get Summary
+## Ambil Ringkasan
 
-Endpoint : GET /api/dashboard/summary
+Endpoint: GET /api/dashboard/summary
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 {
@@ -29,27 +29,27 @@ Request Body (Success) :
 }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Internal server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Get Category Breakdown
+## Ambil Rincian Kategori
 
-Endpoint : GET /api/dashboard/category-breakdown
+Endpoint: GET /api/dashboard/category-breakdown
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 [
@@ -64,27 +64,27 @@ Request Body (Success) :
 ]
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Internal server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Get Monthly Trend
+## Ambil Tren Bulanan
 
-Endpoint : GET /api/dashboard/monthly-trend
+Endpoint: GET /api/dashboard/monthly-trend
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 [
@@ -96,15 +96,119 @@ Request Body (Success) :
 ]
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Internal server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-### Notes
+### Catatan
 - netRemaining = incomeThisMonth - expenseThisMonth.
 
-- savingsRate = (netRemaining / incomeThisMonth) * 100, or 0 when income is 0.
-- Category breakdown aggregates only expense transactions since start of current month, ordered by total DESC.
-- Monthly trend covers current month plus previous 5 months; months with no data may be omitted.
+- savingsRate = (netRemaining / incomeThisMonth) * 100, atau 0 saat pemasukan 0.
+- Rincian kategori hanya mengagregasi transaksi pengeluaran sejak awal bulan berjalan, diurutkan berdasarkan total DESC.
+- Tren bulanan mencakup bulan berjalan plus 5 bulan sebelumnya; bulan tanpa data mungkin tidak ditampilkan.
+
+## Laporan
+
+> Catatan: Backend tidak memiliki modul /api/reports khusus. Pelaporan disediakan oleh endpoint Dashboard di atas (ringkasan, rincian kategori, tren bulanan). Berikut ringkasan laporan yang tersedia:
+
+### Laporan Ringkasan Bulanan
+
+Endpoint: GET /api/dashboard/summary
+
+Autentikasi: Bearer Token (JWT)
+
+Header Request:
+
+- Authorization: Bearer <token>
+
+Request Body:
+
+Tidak ada
+
+Request Body (Sukses):
+
+```json
+{
+  "incomeThisMonth": 12000000,
+  "expenseThisMonth": 4500000,
+  "balance": 7500000,
+  "savingsRate": 62.5,
+  "incomeDelta": 9.09,
+  "expenseDelta": -12.5
+}
+```
+
+Request Body (Gagal):
+
+```json
+{ "message": "Terjadi kesalahan pada server" }
+```
+
+### Laporan Rincian Kategori
+
+Endpoint: GET /api/dashboard/category-breakdown
+
+Autentikasi: Bearer Token (JWT)
+
+Header Request:
+
+- Authorization: Bearer <token>
+
+Request Body:
+
+Tidak ada
+
+Request Body (Sukses):
+
+```json
+[
+  {
+    "category_id": 12,
+    "category_name": "Makan & Minum",
+    "category_icon": "utensils",
+    "category_color": "#F59E0B",
+    "total": 1850000,
+    "transaction_count": 23
+  }
+]
+```
+
+Request Body (Gagal):
+
+```json
+{ "message": "Terjadi kesalahan pada server" }
+```
+
+### Laporan Tren Bulanan
+
+Endpoint: GET /api/dashboard/monthly-trend
+
+Autentikasi: Bearer Token (JWT)
+
+Header Request:
+
+- Authorization: Bearer <token>
+
+Request Body:
+
+Tidak ada
+
+Request Body (Sukses):
+
+```json
+[
+  {
+    "month": "2026-07",
+    "income": 12000000,
+    "expense": 4500000
+  }
+]
+```
+
+Request Body (Gagal):
+
+```json
+{ "message": "Terjadi kesalahan pada server" }
+```

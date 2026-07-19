@@ -7,15 +7,16 @@ import {
 } from "../validation/schemas.js";
 
 /**
- * List a user's categories ordered for display.
+ * Menampilkan daftar kategori pengguna yang diurutkan untuk tampilan.
  *
- * Returns both income and expense categories ordered by type then name, so the
- * client can group them without further sorting. Scoped strictly by `user_id`.
+ * Mengembalikan kategori pemasukan dan pengeluaran yang diurutkan berdasarkan
+ * tipe lalu nama, agar klien dapat mengelompokkannya tanpa pengurutan lanjutan.
+ * Dibatasi secara ketat oleh `user_id`.
  *
- * @param req - Express request. Requires `req.userId` from auth middleware.
- * @param res - Express response.
- * @returns 201 with category rows, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Membutuhkan `req.userId` dari middleware auth.
+ * @param res - Response Express.
+ * @returns 201 beserta baris kategori, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getCategories = async (req: Request, res: Response) => {
   try {
@@ -27,21 +28,21 @@ export const getCategories = async (req: Request, res: Response) => {
     res.status(201).json(result.rows);
   } catch (error) {
     console.error("Get categories error: ", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Create a custom (non-default) category for the user.
+ * Membuat kategori kustom (bukan default) untuk pengguna.
  *
- * The unique (user_id, name, type) constraint blocks duplicate names of the same
- * type; the caught 23505 error is surfaced as a 400. `is_default` is always false
- * here because seeded defaults are created elsewhere (registration).
+ * Constraint unik (user_id, name, type) memblokir nama duplikat dengan tipe yang
+ * sama; error 23505 yang ditangkap disajikan sebagai 400. `is_default` selalu false
+ * di sini karena default yang ditanam dibuat di tempat lain (saat registrasi).
  *
- * @param req - Express request. Body must satisfy `categoryCreateSchema`.
- * @param res - Express response.
- * @returns 201 with the created category, 400 on duplicate, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Body harus memenuhi `categoryCreateSchema`.
+ * @param res - Response Express.
+ * @returns 201 beserta kategori yang dibuat, 400 saat duplikat, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const createCategory = async (req: Request, res: Response) => {
   try {
@@ -62,23 +63,23 @@ export const createCategory = async (req: Request, res: Response) => {
     if ((error as any).code === "23505") {
       return res
         .status(400)
-        .json({ message: "Category with this name already exists" });
+        .json({ message: "Kategori dengan nama ini sudah ada" });
     }
     console.error("Create categories error: ", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Update a category's name, icon, or color.
+ * Memperbarui nama, ikon, atau warna kategori.
  *
- * Uses `COALESCE` per field so callers may patch a subset of attributes without
- * nulling the others. Ownership is enforced via the `user_id` clause.
+ * Menggunakan `COALESCE` per field agar pemanggil dapat menambal sebagian atribut
+ * tanpa mengosongkan yang lain. Kepemilikan ditegakkan melalui klausa `user_id`.
  *
- * @param req - Express request. `id` path param; body must satisfy `categoryUpdateSchema`.
- * @param res - Express response.
- * @returns 200 with the updated category, 404 if not found, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Parameter path `id`; body harus memenuhi `categoryUpdateSchema`.
+ * @param res - Response Express.
+ * @returns 200 beserta kategori yang diperbarui, 404 jika tidak ditemukan, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const updateCategory = async (req: Request, res: Response) => {
   try {
@@ -96,27 +97,27 @@ export const updateCategory = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ message: "Kategori tidak ditemukan" });
     }
 
     res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error("Create categories error: ", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Delete a category owned by the user.
+ * Menghapus kategori milik pengguna.
  *
- * Transactions referencing this category are kept (their `category_id` is set to
- * NULL via the FK `ON DELETE SET NULL`), preserving history while removing the
- * category from active selection.
+ * Transaksi yang merujuk kategori ini dipertahankan (`category_id`-nya diatur ke
+ * NULL melalui FK `ON DELETE SET NULL`), memelihara riwayat sekaligus menghapus
+ * kategori dari pilihan aktif.
  *
- * @param req - Express request. `id` path param.
- * @param res - Express response.
- * @returns 200 on success, 404 if not found, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Parameter path `id`.
+ * @param res - Response Express.
+ * @returns 200 saat berhasil, 404 jika tidak ditemukan, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const deleteCategory = async (req: Request, res: Response) => {
   try {
@@ -128,12 +129,12 @@ export const deleteCategory = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ message: "Kategori tidak ditemukan" });
     }
 
-    res.status(200).json({ message: "Category deleted" });
+    res.status(200).json({ message: "Kategori berhasil dihapus" });
   } catch (error) {
     console.error("Delete categories error: ", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };

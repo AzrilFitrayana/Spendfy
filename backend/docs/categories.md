@@ -1,35 +1,35 @@
-### Categories API SPEC
+### Spesifikasi API Kategori
 
-All endpoints require Bearer Token (JWT). Categories belong only to the authenticated user.
+Seluruh endpoint membutuhkan Bearer Token (JWT). Kategori hanya dimiliki oleh pengguna yang terautentikasi.
 
-Category Data Model :
+Model Data Kategori:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | Auto-generated primary key. |
-| user_id | integer | Owner of the category. |
-| name | string | Category name (1-50 characters). |
-| type | string | "income" or "expense". |
-| icon | string \| null | Icon identifier (max 50 characters). |
-| color | string \| null | Hex color code, e.g. #FF5733 (max 7 characters). |
-| is_default | boolean | true if seeded at registration. |
-| created_at | string | Creation timestamp (ISO 8601). |
+| Field | Tipe | Deskripsi |
+|-------|------|-----------|
+| id | integer | Primary key yang dibuat otomatis. |
+| user_id | integer | Pemilik kategori. |
+| name | string | Nama kategori (1-50 karakter). |
+| type | string | "income" atau "expense". |
+| icon | string \| null | Identifier ikon (maks 50 karakter). |
+| color | string \| null | Kode warna hex, mis. #FF5733 (maks 7 karakter). |
+| is_default | boolean | true jika ditanam saat registrasi. |
+| created_at | string | Timestamp pembuatan (ISO 8601). |
 
-## List Categories
+## Daftar Kategori
 
-Endpoint : GET /api/categories
+Endpoint: GET /api/categories
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 [
@@ -46,28 +46,28 @@ Request Body (Success) :
 ]
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Not authorized, no token" }
+{ "message": "Tidak diizinkan, token tidak ada" }
 ```
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Create Category
+## Buat Kategori
 
-Endpoint : POST /api/categories
+Endpoint: POST /api/categories
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
-- Content-Type : application/json
+- Authorization: Bearer <token>
+- Content-Type: application/json
 
-Request Body :
+Request Body:
 
 ```json
 {
@@ -78,12 +78,12 @@ Request Body :
 }
 ```
 
-- name : string, 1-50 characters, required
-- type : string, "income" or "expense", required
-- icon : string, max 50 characters, optional
-- color : string, hex #RRGGBB (max 7 characters), optional
+- name: string, 1-50 karakter, wajib
+- type: string, "income" atau "expense", wajib
+- icon: string, maks 50 karakter, opsional
+- color: string, hex #RRGGBB (maks 7 karakter), opsional
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 {
@@ -98,36 +98,36 @@ Request Body (Success) :
 }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Category with this name already exists" }
+{ "message": "Kategori dengan nama ini sudah ada" }
 ```
 
 ```json
-{ "message": "Category name is required" }
+{ "message": "Nama kategori wajib diisi" }
 ```
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Update Category
+## Perbarui Kategori
 
-Endpoint : PUT /api/categories/:id
+Endpoint: PUT /api/categories/:id
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Path Parameter :
+Path Parameter:
 
-- id : integer, category id, required
+- id: integer, id kategori, wajib
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
-- Content-Type : application/json
+- Authorization: Bearer <token>
+- Content-Type: application/json
 
-Request Body :
+Request Body:
 
 ```json
 {
@@ -136,11 +136,11 @@ Request Body :
 }
 ```
 
-- name : string, 1-50 characters, optional
-- icon : string, max 50 characters, optional
-- color : string, hex #RRGGBB, optional
+- name: string, 1-50 karakter, opsional
+- icon: string, maks 50 karakter, opsional
+- color: string, hex #RRGGBB, opsional
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 {
@@ -155,57 +155,57 @@ Request Body (Success) :
 }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Category name must be at most 50 characters" }
+{ "message": "Nama kategori maksimal 50 karakter" }
 ```
 
 ```json
-{ "message": "Category not found" }
+{ "message": "Kategori tidak ditemukan" }
 ```
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Delete Category
+## Hapus Kategori
 
-Endpoint : DELETE /api/categories/:id
+Endpoint: DELETE /api/categories/:id
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Path Parameter :
+Path Parameter:
 
-- id : integer, category id, required
+- id: integer, id kategori, wajib
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
-{ "message": "Category deleted" }
+{ "message": "Kategori berhasil dihapus" }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Category not found" }
+{ "message": "Kategori tidak ditemukan" }
 ```
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-### Notes
+### Catatan
 
-- Categories are scoped to the authenticated user.
-- A (user_id, name, type) unique constraint prevents duplicate names of the same type.
-- type cannot be updated; is_default is always false for custom categories.
-- Deleted categories cannot be restored; referenced transactions become uncategorized (category_id set to null).
+- Kategori dibatasi pada pengguna yang terautentikasi.
+- Constraint unik (user_id, name, type) mencegah nama duplikat dengan tipe yang sama.
+- type tidak dapat diperbarui; is_default selalu false untuk kategori kustom.
+- Kategori yang dihapus tidak dapat dipulihkan; transaksi terkait menjadi tidak berkategori (category_id diatur ke null).

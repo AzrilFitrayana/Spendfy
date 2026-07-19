@@ -8,19 +8,19 @@ import {
 import { analyzeTransactionList } from "../utils/gemini.js";
 
 /**
- * List a user's transactions with filtering, search, and pagination.
+ * Menampilkan daftar transaksi pengguna dengan filter, pencarian, dan paginasi.
  *
- * Builds the WHERE clause dynamically from the provided query params (date range,
- * category, type, free-text search across description/notes) so a single endpoint
- * powers list, filter, and search views. Parameter indexes are shifted as filters
- * are appended, and `limit`/`offset` are always bound last for safe pagination.
- * Transactions are joined to their category for display metadata.
+ * Membangun klausa WHERE secara dinamis dari parameter query yang diberikan (rentang
+ * tanggal, kategori, tipe, pencarian teks bebas pada description/notes) agar satu
+ * endpoint melayani tampilan daftar, filter, dan pencarian. Indeks parameter digeser
+ * seiring penambahan filter, dan `limit`/`offset` selalu diikat paling akhir untuk
+ * paginasi yang aman. Transaksi digabung ke kategorinya untuk metadata tampilan.
  *
- * @param req - Express request. Query may include startDate, endDate, categoryId,
+ * @param req - Request Express. Query dapat berisi startDate, endDate, categoryId,
  *              type, search, limit, offset.
- * @param res - Express response.
- * @returns 200 with matching transaction rows, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param res - Response Express.
+ * @returns 200 beserta baris transaksi yang cocok, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getTransactions = async (req: Request, res: Response) => {
   try {
@@ -79,20 +79,20 @@ export const getTransactions = async (req: Request, res: Response) => {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Get transactions error:", error);
-    res.status(500).json({ error: "Failed to fetch transactions" });
+    res.status(500).json({ error: "Gagal mengambil transaksi" });
   }
 };
 
 /**
- * Create a transaction for the authenticated user.
+ * Membuat transaksi untuk pengguna terautentikasi.
  *
- * Validates the payload via `transactionCreateSchema` before insert; amounts and
- * types are enforced there so the DB only ever receives well-formed rows.
+ * Memvalidasi payload via `transactionCreateSchema` sebelum insert; jumlah dan tipe
+ * ditegakkan di sana agar DB hanya menerima baris yang sudah benar formatnya.
  *
- * @param req - Express request. Body must satisfy `transactionCreateSchema`.
- * @param res - Express response.
- * @returns 201 with the created transaction, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Body harus memenuhi `transactionCreateSchema`.
+ * @param res - Response Express.
+ * @returns 201 beserta transaksi yang dibuat, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const createTransaction = async (req: Request, res: Response) => {
   try {
@@ -118,20 +118,20 @@ export const createTransaction = async (req: Request, res: Response) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error("Create transaction error:", error);
-    res.status(500).json({ error: "Failed to create transaction" });
+    res.status(500).json({ error: "Gagal membuat transaksi" });
   }
 };
 
 /**
- * Fetch a single transaction by id, including category metadata.
+ * Mengambil satu transaksi berdasarkan id, beserta metadata kategori.
  *
- * Ownership is enforced by matching both `id` and `user_id`, so one user cannot
- * read another's transaction even with a guessed id.
+ * Kepemilikan ditegakkan dengan mencocokkan `id` dan `user_id`, sehingga satu
+ * pengguna tidak dapat membaca transaksi pengguna lain meski dengan id yang ditebak.
  *
- * @param req - Express request. `id` path param.
- * @param res - Express response.
- * @returns 200 with the transaction, 404 if not found, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Parameter path `id`.
+ * @param res - Response Express.
+ * @returns 200 beserta transaksi, 404 jika tidak ditemukan, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getTransactionById = async (req: Request, res: Response) => {
   try {
@@ -149,28 +149,29 @@ export const getTransactionById = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Transaction not found" });
+      return res.status(404).json({ error: "Transaksi tidak ditemukan" });
     }
 
     res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error("Get transaction by ID error:", error);
-    res.status(500).json({ error: "Failed to fetch transaction" });
+    res.status(500).json({ error: "Gagal mengambil transaksi" });
   }
 };
 
 /**
- * Patch a transaction's fields.
+ * Menambal field transaksi.
  *
- * Validation runs first (and rejects unknown/empty bodies), then only the supplied
- * fields are added to the SET list via `COALESCE`, so partial updates never blank
- * unsent values. Ownership is enforced by the `user_id` clause.
+ * Validasi dijalankan lebih dulu (dan menolak body kosong/tidak dikenal), lalu hanya
+ * field yang diberikan yang ditambahkan ke daftar SET via `COALESCE`, sehingga pembaruan
+ * sebagian tidak pernah mengosongkan nilai yang tidak dikirim. Kepemilikan ditegakkan
+ * oleh klausa `user_id`.
  *
- * @param req - Express request. `id` path param; body must satisfy `transactionUpdateSchema`.
- * @param res - Express response.
- * @returns 200 with the updated transaction, 400 on empty update, 404 if not found,
- *          or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Parameter path `id`; body harus memenuhi `transactionUpdateSchema`.
+ * @param res - Response Express.
+ * @returns 200 beserta transaksi yang diperbarui, 400 saat pembaruan kosong, 404 jika tidak ditemukan,
+ *          atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const updateTransaction = async (req: Request, res: Response) => {
   try {
@@ -207,7 +208,7 @@ export const updateTransaction = async (req: Request, res: Response) => {
     }
 
     if (updates.length === 0) {
-      return res.status(400).json({ error: "No fields provided to update" });
+      return res.status(400).json({ error: "Tidak ada field yang diberikan untuk diperbarui" });
     }
 
     const result = await pool.query(
@@ -219,26 +220,26 @@ export const updateTransaction = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Transaction not found" });
+      return res.status(404).json({ error: "Transaksi tidak ditemukan" });
     }
 
     res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error("Update transaction error:", error);
-    res.status(500).json({ error: "Failed to update transaction" });
+    res.status(500).json({ error: "Gagal memperbarui transaksi" });
   }
 };
 
 /**
- * Delete a transaction owned by the user.
+ * Menghapus transaksi milik pengguna.
  *
- * Uses `RETURNING id` and checks `rowCount` so a missing or non-owned row yields a
- * clean 404 instead of a false success.
+ * Menggunakan `RETURNING id` dan memeriksa `rowCount` agar baris yang hilang atau
+ * bukan milik pengguna menghasilkan 404 yang bersih alih-alih sukses palsu.
  *
- * @param req - Express request. `id` path param.
- * @param res - Express response.
- * @returns 200 on success, 404 if not found, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Parameter path `id`.
+ * @param res - Response Express.
+ * @returns 200 saat berhasil, 404 jika tidak ditemukan, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
@@ -249,29 +250,29 @@ export const deleteTransaction = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Transaction not found" });
+      return res.status(404).json({ message: "Transaksi tidak ditemukan" });
     }
 
-    res.status(200).json({ message: "Transaction deleted" });
+    res.status(200).json({ message: "Transaksi berhasil dihapus" });
   } catch (error) {
     console.error("Delete transaction error: ", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Analyze a subset of the user's transactions via AI.
+ * Menganalisis sebagian transaksi pengguna via AI.
  *
- * Validates that `transactionIds` is a non-empty array, caps it at 50 to bound
- * model cost, loads the matching transactions (joined to category), and forwards
- * them to `analyzeTransactionList`. Using `ANY($2::int[])` fetches all rows in one
- * query and keeps the lookup ownership-scoped by `user_id`.
+ * Memvalidasi bahwa `transactionIds` adalah array non-kosong, membatasinya di 50
+ * untuk mengendalikan biaya model, memuat transaksi yang cocok (digabung ke kategori),
+ * dan meneruskannya ke `analyzeTransactionList`. Menggunakan `ANY($2::int[])` mengambil
+ * semua baris dalam satu query dan menjaga pencarian terbatas kepemilikan via `user_id`.
  *
- * @param req - Express request. Body: `{ transactionIds: number[] }`.
- * @param res - Express response.
- * @returns 200 with the analysis, 400 on invalid input or no matching rows,
- *          or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Body: `{ transactionIds: number[] }`.
+ * @param res - Response Express.
+ * @returns 200 beserta analisis, 400 saat input tidak valid atau tidak ada baris cocok,
+ *          atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const analyzeTransactions = async (req: Request, res: Response) => {
   const { transactionIds } = req.body;
@@ -279,7 +280,7 @@ export const analyzeTransactions = async (req: Request, res: Response) => {
   if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
     return res
       .status(400)
-      .json({ message: "transactionIds array is required" });
+      .json({ message: "Array transactionIds wajib diisi" });
   }
 
   const ids = transactionIds.slice(0, 50);
@@ -297,7 +298,7 @@ export const analyzeTransactions = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(400).json({message: "No transactions found for analysis"})
+      return res.status(400).json({message: "Tidak ada transaksi yang ditemukan untuk dianalisis"})
     }
 
     const userRes = await pool.query('SELECT currency FROM users WHERE id = $1', [req.userId])
@@ -311,6 +312,6 @@ export const analyzeTransactions = async (req: Request, res: Response) => {
     res.status(200).json(analysis);
   } catch (error) {
     console.error("Analyze transactions error:", error);
-    res.status(500).json({ error: "Failed to analyze transactions" });
+    res.status(500).json({ error: "Gagal menganalisis transaksi" });
   }
 };

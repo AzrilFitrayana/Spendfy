@@ -1,20 +1,20 @@
-### Users API SPEC
+### Spesifikasi API Pengguna
 
-## Get Current User
+## Ambil Pengguna Saat Ini
 
-Endpoint : GET /api/auth/user
+Endpoint: GET /api/auth/user
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 {
@@ -26,37 +26,37 @@ Request Body (Success) :
 }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Not authorized, no token" }
+{ "message": "Tidak diizinkan, token tidak ada" }
 ```
 
 ```json
-{ "message": "Not authorized, token failed" }
+{ "message": "Tidak diizinkan, token gagal" }
 ```
 
 ```json
-{ "message": "User not found" }
+{ "message": "Pengguna tidak ditemukan" }
 ```
 
 ```json
-{ "message": "Internal server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-### User Data Model
+### Model Data Pengguna
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | Auto-generated primary key. |
-| name | string | User display name (max 100 characters). |
-| email | string | Unique email (max 255 characters). |
-| password | string | bcrypt hash. Never returned. |
-| currency | string | ISO currency code, 3 characters. Default "IDR". |
-| created_at | string | Account creation timestamp (ISO 8601). |
+| Field | Tipe | Deskripsi |
+|-------|------|-----------|
+| id | integer | Primary key yang dibuat otomatis. |
+| name | string | Nama tampilan pengguna (maks 100 karakter). |
+| email | string | Email unik (maks 255 karakter). |
+| password | string | Hash bcrypt. Tidak pernah dikembalikan. |
+| currency | string | Kode mata uang ISO, 3 karakter. Default "IDR". |
+| created_at | string | Timestamp pembuatan akun (ISO 8601). |
 
-### Notes
+### Catatan
 
-- Account creation is via POST /api/auth/register (see auth.md).
-- The user is identified from the JWT userId claim.
-- Email is unique; changing email or password is not supported by the API.
+- Pembuatan akun melalui POST /api/auth/register (lihat auth.md).
+- Pengguna diidentifikasi dari klaim userId pada JWT.
+- Email bersifat unik; mengubah email atau password tidak didukung oleh API.

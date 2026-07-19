@@ -59,14 +59,14 @@ interface BudgetAlertRow {
 }
 
 /**
- * Look up the authenticated user's display currency.
+ * Mencari mata uang tampilan pengguna yang terautentikasi.
  *
- * Centralizes currency resolution so all insight builders return amounts in the
- * user's preferred ISO code. Falls back to "IDR" when unset so downstream prompts
- * still format sensibly.
+ * Memusatkan penyelesaian mata uang agar semua pembangun insight mengembalikan
+ * jumlah dalam kode ISO pilihan pengguna. Fallback ke "IDR" saat tidak diatur
+ * agar prompt downstream tetap memformat dengan wajar.
  *
- * @param userId - Authenticated user id.
- * @returns The user's currency code, or "IDR" as a fallback.
+ * @param userId - Id pengguna terautentikasi.
+ * @returns Kode mata uang pengguna, atau "IDR" sebagai fallback.
  */
 const getUserCurrency = async (userId: string | undefined): Promise<string> => {
   const result = await pool.query("SELECT currency FROM users WHERE id = $1", [
@@ -76,16 +76,16 @@ const getUserCurrency = async (userId: string | undefined): Promise<string> => {
 };
 
 /**
- * List the user's stored AI insights, newest first.
+ * Menampilkan insight AI yang tersimpan milik pengguna, yang terbaru lebih dulu.
  *
- * Reads from `ai_insights` (the table created via migration) so the client can
- * show previously generated insights without re-calling the model. Capped at 50
- * rows to bound payload size for the history view.
+ * Membaca dari `ai_insights` (tabel yang dibuat via migrasi) agar klien dapat
+ * menampilkan insight yang pernah dihasilkan tanpa memanggil model ulang. Dibatasi
+ * 50 baris untuk membatasi ukuran payload pada tampilan riwayat.
  *
- * @param req - Express request. Requires `req.userId` from auth middleware.
- * @param res - Express response.
- * @returns 200 with insight rows, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Membutuhkan `req.userId` dari middleware auth.
+ * @param res - Response Express.
+ * @returns 200 beserta baris insight, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getInsigths = async (req: Request, res: Response) => {
   try {
@@ -96,22 +96,21 @@ export const getInsigths = async (req: Request, res: Response) => {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error fetching insights:", error);
-    res.status(500).json({ message: "Failed to fetch insights" });
+    res.status(500).json({ message: "Gagal mengambil insight" });
   }
 };
 
 /**
- * Build the data payload for a monthly summary insight.
+ * Membangun payload data untuk insight ringkasan bulanan.
  *
- * Runs three CTEs in one query (current month totals, current-month category
- * breakdown, and the prior three months' trend), then asks Gemini to produce the
- * insight. Aggregating in SQL keeps the prompt compact; the period start/end are
- * derived from the current month so the stored insight can be grouped by month
- * later.
+ * Menjalankan tiga CTE dalam satu query (total bulan ini, rincian kategori bulan
+ * ini, dan tren tiga bulan sebelumnya), lalu meminta Gemini menghasilkan insight.
+ * Mengagregasi di SQL menjaga prompt tetap ringkas; awal/akhir periode diturunkan
+ * dari bulan berjalan agar insight yang disimpan dapat dikelompokkan per bulan nanti.
  *
- * @param userId - Authenticated user id.
- * @returns The generated insight content plus `periodStart`/`periodEnd` strings.
- * @throws Error if no monthly data is available or the model call fails.
+ * @param userId - Id pengguna terautentikasi.
+ * @returns Konten insight yang dihasilkan beserta string `periodStart`/`periodEnd`.
+ * @throws Error jika tidak ada data bulanan atau pemanggilan model gagal.
  */
 const buildMonthlyInsight = async (userId: string | undefined) => {
   const data = await pool.query<MonthlyInsightRow>(
@@ -156,7 +155,7 @@ const buildMonthlyInsight = async (userId: string | undefined) => {
 
   const row = data.rows[0];
   if (!row) {
-    throw new Error("No monthly insight data available");
+    throw new Error("Tidak ada data insight bulanan yang tersedia");
   }
   const totalIncome = parseFloat(row.income || "0");
   const totalExpense = parseFloat(row.expense || "0");
@@ -189,17 +188,17 @@ const buildMonthlyInsight = async (userId: string | undefined) => {
 
 
 /**
- * Build the data payload for a weekly summary insight.
+ * Membangun payload data untuk insight ringkasan mingguan.
  *
- * Runs three CTEs in one query (current week totals, current-week category
- * breakdown, and the prior four weeks' trend), then asks Gemini to produce the
- * insight. Period bounds (`period_start`, `period_end`) are derived directly in
- * SQL via `date_trunc('week', CURRENT_DATE)` so no date arithmetic is needed in
- * JS. The result is stored in `ai_insights` by the caller (`generateInsight`).
+ * Menjalankan tiga CTE dalam satu query (total minggu ini, rincian kategori minggu
+ * ini, dan tren empat minggu sebelumnya), lalu meminta Gemini menghasilkan insight.
+ * Batas periode (`period_start`, `period_end`) diturunkan langsung di SQL via
+ * `date_trunc('week', CURRENT_DATE)` sehingga tidak perlu aritmatika tanggal di JS.
+ * Hasil disimpan di `ai_insights` oleh pemanggil (`generateInsight`).
  *
- * @param userId - Authenticated user id.
- * @returns The generated insight content plus `periodStart`/`periodEnd` strings.
- * @throws Error if no weekly data is available or the Gemini call fails.
+ * @param userId - Id pengguna terautentikasi.
+ * @returns Konten insight yang dihasilkan beserta string `periodStart`/`periodEnd`.
+ * @throws Error jika tidak ada data mingguan atau pemanggilan Gemini gagal.
  */
 export const buildWeeklyInsight = async (userId: string | undefined) => {
   const data = await pool.query<WeeklyInsightRow>(
@@ -249,7 +248,7 @@ export const buildWeeklyInsight = async (userId: string | undefined) => {
 
   const row = data.rows[0];
   if (!row) {
-    throw new Error("No weekly insight data available");
+    throw new Error("Tidak ada data insight mingguan yang tersedia");
   }
 
   const totalIncome = parseFloat(row.income || "0");
@@ -275,15 +274,15 @@ export const buildWeeklyInsight = async (userId: string | undefined) => {
 };
 
 /**
- * Build the data payload for savings tips.
+ * Membangun payload data untuk tips menabung.
  *
- * Finds the user's top five expense categories over the last 30 days and their
- * last-30-day income, then asks Gemini for tips. The 30-day window (rather than
- * calendar month) makes tips feel timely regardless of when the user asks.
+ * Mencari lima kategori pengeluaran teratas pengguna selama 30 hari terakhir dan
+ * pemasukan 30 hari terakhir mereka, lalu meminta Gemini untuk tips. Jendela 30 hari
+ * (bukan bulan kalender) membuat tips terasa aktual terlepas dari kapan pengguna bertanya.
  *
- * @param userId - Authenticated user id.
- * @returns The generated tips content plus null period bounds (always current).
- * @throws Error if the model call fails.
+ * @param userId - Id pengguna terautentikasi.
+ * @returns Konten tips yang dihasilkan beserta batas periode null (selalu terkini).
+ * @throws Error jika pemanggilan model gagal.
  */
 const buildSavingsTips = async (userId: string | undefined) => {
   const top = await pool.query<TopCategoryRow>(
@@ -328,25 +327,25 @@ const buildSavingsTips = async (userId: string | undefined) => {
 };
 
 /**
- * Build the data payload for a single-category budget alert.
+ * Membangun payload data untuk peringatan anggaran kategori tunggal.
  *
- * Loads the budget and its month-to-date spent (computed in SQL) for the requested
- * category, then asks Gemini for an alert. Requiring `categoryId` keeps the alert
- * scoped; if the budget is missing a clear error is thrown so the caller returns
- * 500 rather than persisting a broken insight.
+ * Memuat anggaran dan pengeluaran bulan-ke-tanggalnya (dihitung di SQL) untuk kategori
+ * yang diminta, lalu meminta Gemini untuk peringatan. Mengharuskan `categoryId` agar
+ * peringatan tetap terbatas; jika anggaran hilang, error jelas dilemparkan agar
+ * pemanggil mengembalikan 500 daripada menyimpan insight rusak.
  *
- * @param userId - Authenticated user id.
- * @param categoryId - Category whose budget should be alerted on.
- * @returns The generated alert content plus null period bounds.
- * @throws Error if `categoryId` is missing, the budget isn't found, or the model
- *         call fails.
+ * @param userId - Id pengguna terautentikasi.
+ * @param categoryId - Kategori yang anggarannya akan diperingatkan.
+ * @returns Konten peringatan yang dihasilkan beserta batas periode null.
+ * @throws Error jika `categoryId` kosong, anggaran tidak ditemukan, atau pemanggilan
+ *         model gagal.
  */
 const buildBudgetAlert = async (
   userId: string | undefined,
   categoryId: string | undefined,
 ) => {
   if (!categoryId) {
-    throw new Error("Category ID is required");
+    throw new Error("ID kategori wajib diisi");
   }
 
   const budgetRow = await pool.query<BudgetAlertRow>(
@@ -367,12 +366,12 @@ const buildBudgetAlert = async (
   );
 
   if (budgetRow.rows.length === 0) {
-    throw new Error("Budget not found for category");
+    throw new Error("Anggaran tidak ditemukan untuk kategori");
   }
 
   const b = budgetRow.rows[0];
   if (!b) {
-    throw new Error("Budget not found for category");
+    throw new Error("Anggaran tidak ditemukan untuk kategori");
   }
 
   const now = new Date();
@@ -397,25 +396,25 @@ const buildBudgetAlert = async (
 };
 
 /**
- * Generate and persist an AI insight of a given type.
+ * Menghasilkan dan menyimpan insight AI berdasarkan tipe tertentu.
  *
- * Routes on the `type` body field to the appropriate builder (`monthly_summary`,
- * `savings_tips`, or `budget_alert`), asks the model for content, and stores the
- * result in `ai_insights` so it can be re-served without re-calling Gemini. The
- * generated `content_json` is stored as-is; persisting raw JSON avoids re-parsing
- * and lets the client render structured insight cards directly.
+ * Mengarahkan pada field body `type` ke pembangun yang sesuai (`monthly_summary`,
+ * `savings_tips`, atau `budget_alert`), meminta model untuk konten, dan menyimpan
+ * hasilnya di `ai_insights` agar dapat disajikan ulang tanpa memanggil Gemini lagi.
+ * `content_json` yang dihasilkan disimpan apa adanya; menyimpan JSON mentah menghindari
+ * penguraian ulang dan memungkinkan klien merender kartu insight terstruktur secara langsung.
  *
- * @param req - Express request. Body: `{ type, categoryId? }`.
- * @param res - Express response.
- * @returns 201 with the stored insight row, 400 on invalid/missing type or
- *          missing categoryId for budget alerts, or 500 on generation/storage error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Body: `{ type, categoryId? }`.
+ * @param res - Response Express.
+ * @returns 201 beserta baris insight yang disimpan, 400 saat tipe tidak valid/kosong atau
+ *          categoryId kosong untuk peringatan anggaran, atau 500 saat error generasi/penyimpanan.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const generateInsight = async (req: Request, res: Response) => {
   const { type, categoryId } = req.body;
 
   if (!type) {
-    return res.status(400).json({ message: "Insight type is required" });
+    return res.status(400).json({ message: "Tipe insight wajib diisi" });
   }
 
   try {
@@ -430,7 +429,7 @@ export const generateInsight = async (req: Request, res: Response) => {
     } else if(type === 'weekly_summary') {
       result = await buildWeeklyInsight(req.userId);
     } else{
-      return res.status(400).json({ message: "Unknown insight type" });
+      return res.status(400).json({ message: "Tipe insight tidak dikenal" });
     }
 
     const inserted = await pool.query(
@@ -443,6 +442,6 @@ export const generateInsight = async (req: Request, res: Response) => {
     res.status(201).json(inserted.rows[0]);
   } catch (error) {
     console.error("Error generating insight:", error);
-    res.status(500).json({ message: "Failed to generate insight" });
+    res.status(500).json({ message: "Gagal menghasilkan insight" });
   }
 };

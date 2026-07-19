@@ -2,15 +2,15 @@ import type { Request, Response } from "express";
 import pool from "../db.js";
 
 /**
- * Compute percentage change between two periods.
+ * Menghitung persentase perubahan antara dua periode.
  *
- * Returns 100 when moving from zero to a non-zero value (a meaningful "new"
- * signal) and 0 when both are zero, avoiding divide-by-zero and giving the UI a
- * stable basis for trend arrows.
+ * Mengembalikan 100 saat berpindah dari nol ke nilai非-nol (sinyal "baru" yang
+ * bermakna) dan 0 saat keduanya nol, menghindari pembagian dengan nol serta
+ * memberi UI dasar yang stabil untuk panah tren.
  *
- * @param current - Current period value.
- * @param previous - Previous period value.
- * @returns Percentage delta (can be negative).
+ * @param current - Nilai periode saat ini.
+ * @param previous - Nilai periode sebelumnya.
+ * @returns Delta persen (dapat bernilai negatif).
  */
 const pctChange = (current: number, previous: number): number => {
   if (previous === 0) return current === 0 ? 0 : 100;
@@ -18,19 +18,19 @@ const pctChange = (current: number, previous: number): number => {
 };
 
 /**
- * Return the user's financial summary for the current and previous month.
+ * Mengembalikan ringkasan keuangan pengguna untuk bulan ini dan bulan lalu.
  *
- * Uses a single CTE that buckets income/expense by month, then pivots the current
- * and prior month into one row via conditional aggregation. Computing both months
- * in one query (rather than two round-trips) keeps the endpoint fast. Derived
- * fields `netRemaining` and `savingsRate` are calculated in app code from the raw
- * totals so the client receives ready-to-render numbers.
+ * Menggunakan satu CTE yang mengelompokkan pemasukan/pengeluaran berdasarkan bulan,
+ * lalu memutar bulan saat ini dan sebelumnya ke dalam satu baris via agregasi
+ * kondisional. Menghitung kedua bulan dalam satu query (bukan dua kali bolak-balik)
+ * menjaga endpoint tetap cepat. Field turunan `netRemaining` dan `savingsRate`
+ * dihitung di kode aplikasi dari total mentah agar klien menerima angka siap tampil.
  *
- * @param req - Express request. Requires `req.userId` from auth middleware.
- * @param res - Express response.
- * @returns 200 with income/expense totals, netRemaining, savingsRate, and month-over-month
- *          deltas, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Membutuhkan `req.userId` dari middleware auth.
+ * @param res - Response Express.
+ * @returns 200 beserta total pemasukan/pengeluaran, netRemaining, savingsRate, dan
+ *          delta bulan-ke-bulan, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getSummary = async (req: Request, res: Response) => {
   try {
@@ -78,21 +78,21 @@ export const getSummary = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("GetSummary error: ", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Return expense totals per category for the current month.
+ * Mengembalikan total pengeluaran per kategori untuk bulan berjalan.
  *
- * Aggregates only `expense` transactions since the current month start and joins
- * category metadata for display. Ordering by total descending lets the client
- * render the biggest spend categories first without additional sorting.
+ * Mengagregasi hanya transaksi `expense` sejak awal bulan ini dan menggabungkan
+ * metadata kategori untuk tampilan. Mengurutkan berdasarkan total menurun agar
+ * klien dapat menampilkan kategori pengeluaran terbesar lebih dulu tanpa pengurutan tambahan.
  *
- * @param req - Express request. Requires `req.userId` from auth middleware.
- * @param res - Express response.
- * @returns 200 with per-category rows (total, transaction_count, metadata), or 500.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Membutuhkan `req.userId` dari middleware auth.
+ * @param res - Response Express.
+ * @returns 200 beserta baris per kategori (total, transaction_count, metadata), atau 500.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getCategoryBreakdown = async (req: Request, res: Response) => {
   try {
@@ -117,21 +117,21 @@ export const getCategoryBreakdown = async (req: Request, res: Response) => {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("GetCategoryBreakDown error: ", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Return monthly income/expense totals for the last six months.
+ * Mengembalikan total pemasukan/pengeluaran bulanan untuk enam bulan terakhir.
  *
- * Truncates each transaction date to its month and sums income/expense per month,
- * covering the current month plus the five prior (via INTERVAL '5 month') to give
- * the UI a full trend chart. `to_char` produces stable "YYYY-MM" bucket keys.
+ * Memotong setiap tanggal transaksi ke bulannya dan menjumlahkan pemasukan/pengeluaran
+ * per bulan, mencakup bulan berjalan plus lima bulan sebelumnya (via INTERVAL '5 month')
+ * untuk memberi UI grafik tren lengkap. `to_char` menghasilkan kunci bucket "YYYY-MM" yang stabil.
  *
- * @param req - Express request. Requires `req.userId` from auth middleware.
- * @param res - Express response.
- * @returns 200 with one row per month (month, income, expense), or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Membutuhkan `req.userId` dari middleware auth.
+ * @param res - Response Express.
+ * @returns 200 beserta satu baris per bulan (month, income, expense), atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getMonthlyTrend = async (req: Request, res: Response) => {
   try {
@@ -152,6 +152,6 @@ export const getMonthlyTrend = async (req: Request, res: Response) => {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("GetMonthlyTrend error: ", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };

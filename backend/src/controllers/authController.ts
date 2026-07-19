@@ -11,18 +11,19 @@ const signToken = (userId: string) => {
 };
 
 /**
- * Register a new user and seed their default categories.
+ * Mendaftarkan pengguna baru dan membuat kategori default mereka.
  *
- * Validates the incoming payload, rejects duplicate emails, and creates the user
- * inside a transaction. Seeding `defaultCategories` per user (rather than relying
- * on shared rows) keeps category ownership scoped and enables safe cascade deletes
- * when a user is removed. A JWT is issued on success so the client can authenticate
- * immediately without a separate login.
+ * Memvalidasi payload yang masuk, menolak email yang sudah terdaftar, dan
+ * membuat pengguna di dalam sebuah transaksi. Membuat `defaultCategories`
+ * per pengguna (daripada mengandalkan baris yang dibagikan) menjaga kepemilikan
+ * kategori tetap terbatas serta memungkinkan penghapusan kaskade yang aman
+ * saat pengguna dihapus. JWT diterbitkan saat berhasil agar klien dapat
+ * melakukan autentikasi langsung tanpa login terpisah.
  *
- * @param req - Express request. Body must satisfy `registerSchema`.
- * @param res - Express response.
- * @returns 201 with the created user and a signed JWT, or 400/500 on failure.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Body harus memenuhi `registerSchema`.
+ * @param res - Response Express.
+ * @returns 201 beserta pengguna yang dibuat dan JWT yang ditandatangani, atau 400/500 saat gagal.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const register = async (req: Request, res: Response) => {
   const client = await pool.connect();
@@ -40,7 +41,7 @@ export const register = async (req: Request, res: Response) => {
       [email],
     );
     if (existing.rows.length > 0) {
-      return res.status(400).json({ message: "Email already registered" });
+      return res.status(400).json({ message: "Email sudah digunakan" });
     }
 
     await client.query("BEGIN");
@@ -63,31 +64,31 @@ export const register = async (req: Request, res: Response) => {
         [user.id, item.name, item.type, item.icon, item.color],
       );
     }
+    
+    const token = signToken(user.id);
 
     await client.query("COMMIT");
-
-    const token = signToken(user.id);
     res.status(201).json({ user, token });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Registration error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   } finally {
     client.release();
   }
 };
 
 /**
- * Authenticate a user and return a signed JWT.
+ * Mengautentikasi pengguna dan mengembalikan JWT yang ditandatangani.
  *
- * Verifies the email exists and the bcrypt password hash matches, then issues a
- * 7-day JWT. Credentials are intentionally not differentiated ("Invalid
- * credentials" for both cases) to avoid leaking whether an email is registered.
+ * Memeriksa keberadaan email dan kecocokan hash password bcrypt, lalu menerbitkan
+ * JWT 7 hari. Kredensial sengaja tidak dibedakan ("Kredensial tidak valid" untuk
+ * kedua kasus) demi menghindari kebocoran apakah sebuah email terdaftar.
  *
- * @param req - Express request. Body must satisfy `loginSchema`.
- * @param res - Express response.
- * @returns 200 with the user (id, name, email, currency) and a JWT, or 400/500.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Body harus memenuhi `loginSchema`.
+ * @param res - Response Express.
+ * @returns 200 beserta pengguna (id, name, email, currency) dan JWT, atau 400/500.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const login = async (req: Request, res: Response) => {
   try {
@@ -100,13 +101,13 @@ export const login = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Kredensial tidak valid" });
     }
 
     const user = result.rows[0];
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Kredensial tidak valid" });
     }
 
     const token = signToken(user.id);
@@ -121,21 +122,21 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Login error: ", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Fetch the authenticated user's profile.
+ * Mengambil profil pengguna yang terautentikasi.
  *
- * Reads the `userId` attached by the auth middleware (not a path param) so a user
- * can only retrieve their own record. Keeps the response payload minimal by
- * excluding the password hash.
+ * Membaca `userId` yang dilampirkan oleh middleware auth (bukan parameter path)
+ * sehingga pengguna hanya dapat mengambil data dirinya sendiri. Membuat payload
+ * response tetap minimal dengan mengecualikan hash password.
  *
- * @param req - Express request. Requires `req.userId` from auth middleware.
- * @param res - Express response.
- * @returns 200 with the user row, 404 if missing, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Membutuhkan `req.userId` dari middleware auth.
+ * @param res - Response Express.
+ * @returns 200 beserta baris pengguna, 404 jika tidak ditemukan, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -145,12 +146,12 @@ export const getUser = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Pengguna tidak ditemukan" });
     }
 
     res.json(result.rows[0])
   } catch (error) {
     console.error("Get user error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };

@@ -1,38 +1,38 @@
-### Budgets API SPEC
+### Spesifikasi API Anggaran
 
-All endpoints require Bearer Token (JWT) and are scoped to the authenticated user.
+Seluruh endpoint membutuhkan Bearer Token (JWT) dan dibatasi pada pengguna yang terautentikasi.
 
-Budget Data Model :
+Model Data Anggaran:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | Auto-generated primary key. |
-| user_id | integer | Owner of the budget. |
-| category_id | integer | Category the budget applies to. |
-| amount | number | Budget limit (> 0). |
-| period | string | "monthly" (default) or "weekly". |
-| start_date | string | Period start date (YYYY-MM-DD). |
-| created_at | string | Creation timestamp (ISO 8601). |
-| category_name | string | Joined category name. |
-| category_icon | string | Joined category icon. |
-| category_color | string | Joined category color. |
-| spent | number | Aggregated expense for current period window. |
+| Field | Tipe | Deskripsi |
+|-------|------|-----------|
+| id | integer | Primary key yang dibuat otomatis. |
+| user_id | integer | Pemilik anggaran. |
+| category_id | integer | Kategori yang diterapkan anggaran. |
+| amount | number | Batas anggaran (> 0). |
+| period | string | "monthly" (default) atau "weekly". |
+| start_date | string | Tanggal awal periode (YYYY-MM-DD). |
+| created_at | string | Timestamp pembuatan (ISO 8601). |
+| category_name | string | Nama kategori yang digabung. |
+| category_icon | string | Ikon kategori yang digabung. |
+| category_color | string | Warna kategori yang digabung. |
+| spent | number | Agregat pengeluaran untuk jendela periode saat ini. |
 
-## List Budgets
+## Daftar Anggaran
 
-Endpoint : GET /api/budgets
+Endpoint: GET /api/budgets
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 [
@@ -50,24 +50,24 @@ Request Body (Success) :
 ]
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Create Budget
+## Buat Anggaran
 
-Endpoint : POST /api/budgets
+Endpoint: POST /api/budgets
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
-- Content-Type : application/json
+- Authorization: Bearer <token>
+- Content-Type: application/json
 
-Request Body :
+Request Body:
 
 ```json
 {
@@ -77,12 +77,12 @@ Request Body :
 }
 ```
 
-- categoryId : integer, required
-- amount : number, positive (> 0), required
-- period : string, "monthly" (default) or "weekly", optional
-- startDate : string, YYYY-MM-DD, optional (defaults to 1st of current month)
+- categoryId: integer, wajib
+- amount: number, positif (> 0), wajib
+- period: string, "monthly" (default) atau "weekly", opsional
+- startDate: string, YYYY-MM-DD, opsional (default tanggal 1 bulan berjalan)
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 {
@@ -94,36 +94,36 @@ Request Body (Success) :
 }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Budget already exists" }
+{ "message": "Anggaran sudah ada" }
 ```
 
 ```json
-{ "message": "Amount must be a positive number" }
+{ "message": "Jumlah harus angka positif" }
 ```
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Update Budget
+## Perbarui Anggaran
 
-Endpoint : PUT /api/budgets/:id
+Endpoint: PUT /api/budgets/:id
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Path Parameter :
+Path Parameter:
 
-- id : integer, budget id, required
+- id: integer, id anggaran, wajib
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
-- Content-Type : application/json
+- Authorization: Bearer <token>
+- Content-Type: application/json
 
-Request Body :
+Request Body:
 
 ```json
 {
@@ -131,10 +131,10 @@ Request Body :
 }
 ```
 
-- amount : number, positive (> 0), optional
-- period : string, "monthly" or "weekly", optional
+- amount: number, positif (> 0), opsional
+- period: string, "monthly" atau "weekly", opsional
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 {
@@ -148,69 +148,69 @@ Request Body (Success) :
 }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Amount must be a positive number" }
+{ "message": "Jumlah harus angka positif" }
 ```
 
 ```json
-{ "message": "Budget not found" }
+{ "message": "Anggaran tidak ditemukan" }
 ```
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Delete Budget
+## Hapus Anggaran
 
-Endpoint : DELETE /api/budgets/:id
+Endpoint: DELETE /api/budgets/:id
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Path Parameter :
+Path Parameter:
 
-- id : integer, budget id, required
+- id: integer, id anggaran, wajib
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
-{ "message": "Budget deleted successfully" }
+{ "message": "Anggaran berhasil dihapus" }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Budget not found" }
+{ "message": "Anggaran tidak ditemukan" }
 ```
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-## Analyze Budgets (AI)
+## Analisis Anggaran (AI)
 
-Endpoint : GET /api/budgets/analyze
+Endpoint: GET /api/budgets/analyze
 
-Authentication : Bearer Token (JWT)
+Autentikasi: Bearer Token (JWT)
 
-Request Header :
+Header Request:
 
-- Authorization : Bearer <token>
+- Authorization: Bearer <token>
 
-Request Body :
+Request Body:
 
-None
+Tidak ada
 
-Request Body (Success) :
+Request Body (Sukses):
 
 ```json
 {
@@ -218,21 +218,21 @@ Request Body (Success) :
     {
       "budgetId": 5,
       "status": "caution",
-      "message": "You've used about 42% of your Makan & Minum budget with half the month left."
+      "message": "Anda telah menggunakan sekitar 42% anggaran Makan & Minum Anda dengan sisa separuh bulan."
     }
   ]
 }
 ```
 
-Request Body (Failed) :
+Request Body (Gagal):
 
 ```json
-{ "message": "Server error" }
+{ "message": "Terjadi kesalahan pada server" }
 ```
 
-### Notes
+### Catatan
 
-- One budget per (user_id, category_id, period).
-- spent aggregates only expense transactions in the current period window.
-- budget_alert status: "good" (under target), "caution" (>=70%), "concerning" (over 100%).
-- Returns empty analyses array (no error) when user has no budgets.
+- Satu anggaran per (user_id, category_id, period).
+- spent hanya mengagregasi transaksi pengeluaran dalam jendela periode saat ini.
+- status budget_alert: "good" (di bawah target), "caution" (>=70%), "concerning" (lebih dari 100%).
+- Mengembalikan array analyses kosong (bukan error) saat pengguna tidak memiliki anggaran.

@@ -8,19 +8,19 @@ import {
 import { analyzeBudgetList } from "../utils/gemini.js";
 
 /**
- * List a user's budgets with live spent totals and category metadata.
+ * Menampilkan daftar anggaran pengguna beserta total pengeluaran dan metadata kategori.
  *
- * Joins each budget to its category and aggregates matching expense transactions
- * within the current period window (month-to-date or week-to-date, depending on
- * `period`). Filtering the transaction join by period in SQL (rather than in
- * application code) avoids loading every transaction and keeps the response
- * accurate as time advances.
+ * Menggabungkan setiap anggaran ke kategorinya dan mengagregasi transaksi pengeluaran
+ * yang cocok dalam jendela periode saat ini (bulan-ke-tanggal atau minggu-ke-tanggal,
+ * tergantung `period`). Menyaring gabungan transaksi berdasarkan periode di SQL
+ * (bukan di kode aplikasi) menghindari pemuatan seluruh transaksi dan menjaga
+ * response tetap akurat seiring berjalannya waktu.
  *
- * @param req - Express request. Requires `req.userId` from auth middleware.
- * @param res - Express response.
- * @returns 200 with budget rows (including `spent`, category name/icon/color),
- *          or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Membutuhkan `req.userId` dari middleware auth.
+ * @param res - Response Express.
+ * @returns 200 beserta baris anggaran (termasuk `spent`, nama/icon/warna kategori),
+ *          atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const getBudgets = async (req: Request, res: Response) => {
   try {
@@ -54,23 +54,23 @@ export const getBudgets = async (req: Request, res: Response) => {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Get budget error: ", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Create a budget for a category.
+ * Membuat anggaran untuk sebuah kategori.
  *
- * Defaults the start date to the first of the current month when not supplied, so
- * month-scoped budgets align with the period window used for spent calculations.
- * The unique constraint on (user_id, category_id, period) prevents duplicate
- * budgets for the same category/period; the caught 23505 error is surfaced as a
- * friendly 400.
+ * Mengisi tanggal mulai dengan awal bulan berjalan saat tidak diberikan, agar
+ * anggaran berskop bulan selaras dengan jendela periode yang dipakai untuk
+ * perhitungan pengeluaran. Constraint unik pada (user_id, category_id, period)
+ * mencegah anggaran ganda untuk kategori/periode yang sama; error 23505 yang
+ * ditangkap disajikan sebagai 400 yang ramah.
  *
- * @param req - Express request. Body must satisfy `budgetCreateSchema`.
- * @param res - Express response.
- * @returns 201 with the created budget, 400 on duplicate, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Body harus memenuhi `budgetCreateSchema`.
+ * @param res - Response Express.
+ * @returns 201 beserta anggaran yang dibuat, 400 saat duplikat, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const createBudget = async (req: Request, res: Response) => {
   try {
@@ -95,24 +95,24 @@ export const createBudget = async (req: Request, res: Response) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     if ((error as any).code === "23505") {
-      return res.status(400).json({ message: "Budget already exists" });
+      return res.status(400).json({ message: "Anggaran sudah ada" });
     }
     console.error("Create budget error: ", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Update a budget's amount and/or period.
+ * Memperbarui jumlah dan/atau periode anggaran.
  *
- * Uses `COALESCE($1, amount)` so callers may update a single field without
- * clearing the other; only provided values are applied. Ownership is enforced via
- * the `user_id` clause.
+ * Menggunakan `COALESCE($1, amount)` agar pemanggil dapat memperbarui satu field
+ * tanpa menghapus field lainnya; hanya nilai yang diberikan yang diterapkan.
+ * Kepemilikan ditegakkan melalui klausa `user_id`.
  *
- * @param req - Express request. `id` path param; body must satisfy `budgetUpdateSchema`.
- * @param res - Express response.
- * @returns 200 with the updated budget, 404 if not found, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Parameter path `id`; body harus memenuhi `budgetUpdateSchema`.
+ * @param res - Response Express.
+ * @returns 200 beserta anggaran yang diperbarui, 404 jika tidak ditemukan, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const updateBudget = async (req: Request, res: Response) => {
   try {
@@ -129,24 +129,24 @@ export const updateBudget = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Budget not found" });
+      return res.status(404).json({ message: "Anggaran tidak ditemukan" });
     }
 
     res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error("Update budget error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Delete a budget owned by the user.
+ * Menghapus anggaran milik pengguna.
  *
- * @param req - Express request. `id` path param.
- * @param res - Express response.
- * @returns 200 on success, 404 if the budget doesn't exist or isn't owned by the
- *          user, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Parameter path `id`.
+ * @param res - Response Express.
+ * @returns 200 saat berhasil, 404 jika anggaran tidak ada atau bukan milik
+ *          pengguna, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const deleteBudget = async (req: Request, res: Response) => {
   try {
@@ -158,28 +158,28 @@ export const deleteBudget = async (req: Request, res: Response) => {
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Budget not found" });
+      return res.status(404).json({ message: "Anggaran tidak ditemukan" });
     }
 
-    res.status(200).json({ message: "Budget deleted successfully" });
+    res.status(200).json({ message: "Anggaran berhasil dihapus" });
   } catch (error) {
     console.error("Delete budget error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 /**
- * Generate AI analyses for all of a user's budgets.
+ * Menghasilkan analisis AI untuk seluruh anggaran pengguna.
  *
- * Reuses the same spent/period aggregation as `getBudgets`, then forwards the
- * result to `analyzeBudgetList`, which classifies each budget's health. Returning
- * an empty `analyses` array (instead of an error) when no budgets exist keeps the
- * client render path simple.
+ * Menggunakan kembali agregasi pengeluaran/periode yang sama seperti `getBudgets`,
+ * lalu meneruskan hasilnya ke `analyzeBudgetList` yang mengklasifikasikan kesehatan
+ * tiap anggaran. Mengembalikan array `analyses` kosong (bukan error) saat tidak ada
+ * anggaran agar jalur render klien tetap sederhana.
  *
- * @param req - Express request. Requires `req.userId` from auth middleware.
- * @param res - Express response.
- * @returns 200 with `{ analyses: [...] }`, or 500 on error.
- * @throws Never propagates; errors are caught and mapped to a 500 response.
+ * @param req - Request Express. Membutuhkan `req.userId` dari middleware auth.
+ * @param res - Response Express.
+ * @returns 200 beserta `{ analyses: [...] }`, atau 500 saat error.
+ * @throws Tidak pernah disebarkan; error ditangkap dan dipetakan ke response 500.
  */
 export const analyzeBudgets = async (req: Request, res: Response) => {
   try {
@@ -223,6 +223,6 @@ export const analyzeBudgets = async (req: Request, res: Response) => {
     return res.status(200).json(data);
   } catch (error) {
     console.error("Analyze budgets error: ", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
