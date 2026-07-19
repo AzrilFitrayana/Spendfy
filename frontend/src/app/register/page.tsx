@@ -1,4 +1,4 @@
-import { RegisterForm } from '@/components/register-form'
+import { RegisterForm } from '@/components/form/RegisterForm'
 import { GalleryVerticalEnd } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -8,7 +8,7 @@ const page = () => {
     <main>
       <section className="grid min-h-svh lg:grid-cols-[46%_1fr]">
         <div className="flex flex-col gap-4 p-6 md:p-10">
-          <div className="flex justify-center gap-2 md:justify-start">
+          <div className="hidden lg:flex justify-center gap-2 md:justify-start">
             <Link href="#" className="flex items-center gap-2 font-bold text-xl">
               <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
                 <GalleryVerticalEnd className="size-4" />
@@ -21,7 +21,7 @@ const page = () => {
               <RegisterForm />
             </div>
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="hidden lg:flex text-sm text-muted-foreground">
             Privacy Policy
           </div>
         </div>

@@ -1,3 +1,5 @@
+'use client'
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,16 +19,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import Link from "next/link"
+import { toast } from "sonner"
 import { GalleryVerticalEnd } from "lucide-react"
-
+import { useState } from "react"
+import { registerUsers } from "@/lib/actions/auth.actions"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [currency, setCurrency] = useState('IDR')
+  const [submitting, setSubmitting] = useState(false);
+
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+
+    const res = await registerUsers({ name, email, password, currency })
+
+    console.log(res)
+
+    if (!res.success) {
+      setSubmitting(false)
+      return toast.error(res.data?.message, { position: "top-right", style: { backgroundColor: '#fee2e2', color: '#991b1b' } })
+    }
+
+    toast.success('Buat akun berhasil!', { position: "top-right", style: { backgroundColor: '#dcfce7', color: '#166534' } })
+    setSubmitting(false)
+    router.push('/dashboard')
+  }
+
   return (
     <>
+      {/* Logo show ketika media dibawah 1024px  */}
       <div className="lg:hidden flex flex-col p-8">
         <div className="flex justify-center">
           <Link href="#" className="flex items-center gap-2 font-bold text-3xl">
@@ -39,9 +71,9 @@ export function RegisterForm({
       </div>
 
 
-      <form className={cn("flex flex-col gap-6", className)} {...props}>
+      <form className={cn("flex flex-col gap-6", className)} {...props} onSubmit={handleSubmit}>
         <FieldGroup className="flex flex-col gap-6">
-          <div className="flex flex-col gap-1 lg:mb-4">
+          <div className="flex flex-col gap-1">
             <h1 className="text-xl lg:text-2xl font-bold">Daftar</h1>
             <p className="text-sm text-balance text-muted-foreground">
               Buat akun dan mulai kelola uang!
@@ -50,19 +82,19 @@ export function RegisterForm({
           <div className="space-y-4">
             <Field>
               <FieldLabel htmlFor="name">Nama</FieldLabel>
-              <Input id="text" type="text" placeholder="Masukan nama kamu" required />
+              <Input id="text" type="text" min='1' max='100' onChange={(e) => setName(e.target.value)} placeholder="Masukan nama kamu" required />
             </Field>
             <Field>
               <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input id="email" type="email" placeholder="m@example.com" required />
+              <Input id="email" type="email" onChange={(e) => setEmail(e.target.value)} placeholder="m@example.com" required />
             </Field>
             <Field>
               <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Input id="password" type="password" placeholder="Minimal panjang 6 karakter" required />
+              <Input id="password" type="password" min='6' max='255' onChange={(e) => setPassword(e.target.value)} placeholder="Minimal panjang 6 karakter" required />
             </Field>
             <Field>
               <FieldLabel htmlFor="currency">Mata Uang</FieldLabel>
-              <Select name="currency" defaultValue="IDR" required>
+              <Select name="currency" onValueChange={(value) => setCurrency(value || '')} defaultValue="IDR" required>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih mata uang" />
                 </SelectTrigger>
@@ -79,7 +111,7 @@ export function RegisterForm({
               </Select>
             </Field>
             <Field>
-              <Button className="cursor-pointer mt-2" type="submit">Daftar</Button>
+              <Button className="cursor-pointer mt-2" disabled={submitting} type="submit">Daftar</Button>
             </Field>
           </div>
           <FieldSeparator />
