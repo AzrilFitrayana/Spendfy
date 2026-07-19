@@ -101,13 +101,13 @@ export const login = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(400).json({ message: "Kredensial tidak valid" });
+      return res.status(400).json({ message: "Email atau password salah" });
     }
 
     const user = result.rows[0];
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(400).json({ message: "Kredensial tidak valid" });
+      return res.status(400).json({ message: "Email atau password salah" });
     }
 
     const token = signToken(user.id);

@@ -44,11 +44,9 @@ export function RegisterForm({
 
     const res = await registerUsers({ name, email, password, currency })
 
-    console.log(res)
-
     if (!res.success) {
       setSubmitting(false)
-      return toast.error(res.data?.message, { position: "top-right", style: { backgroundColor: '#fee2e2', color: '#991b1b' } })
+      return toast.error(res?.message, { position: "top-right", style: { backgroundColor: '#fee2e2', color: '#991b1b' } })
     }
 
     toast.success('Buat akun berhasil!', { position: "top-right", style: { backgroundColor: '#dcfce7', color: '#166534' } })
@@ -82,7 +80,7 @@ export function RegisterForm({
           <div className="space-y-4">
             <Field>
               <FieldLabel htmlFor="name">Nama</FieldLabel>
-              <Input id="text" type="text" min='1' max='100' onChange={(e) => setName(e.target.value)} placeholder="Masukan nama kamu" required />
+              <Input id="name" type="text" min='1' max='100' onChange={(e) => setName(e.target.value)} placeholder="Masukan nama kamu" required />
             </Field>
             <Field>
               <FieldLabel htmlFor="email">Email</FieldLabel>

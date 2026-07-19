@@ -90,7 +90,7 @@ Request Body (Sukses):
 Request Body (Gagal):
 
 ```json
-{ "message": "Kredensial tidak valid" }
+{ "message": "Email atau password salah" }
 ```
 
 ```json
@@ -147,4 +147,4 @@ Request Body (Gagal):
 - Password di-hash dengan bcrypt; hash tidak pernah dikembalikan.
 - JWT kedaluwarsa dalam 7 hari.
 - Registrasi menanam kategori default untuk pengguna.
-- Email tidak valid dan password salah keduanya mengembalikan pesan "Kredensial tidak valid" yang sama.
+- Email tidak valid dan password salah keduanya mengembalikan pesan "Email atau password salah" yang sama.
