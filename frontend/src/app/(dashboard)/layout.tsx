@@ -1,13 +1,12 @@
 import AppShell from "@/components/AppShell";
 import { getUser } from "@/lib/actions/auth.actions"
 
-const layout = async () => {
+const layout = async ({ children }: { children: React.ReactNode }) => {
     const user = await getUser()
 
-    const { name, email } = user;
     return (
-        <AppShell>
-
+        <AppShell user={user}>
+            {children}
         </AppShell>
     )
 }
