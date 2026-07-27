@@ -5,7 +5,6 @@ import { ArrowLeftRight, BotMessageSquare, ChartColumnStacked, CircleQuestionMar
 import {
     Avatar,
     AvatarFallback,
-    AvatarImage,
 } from "@/components/ui/avatar"
 import {
     DropdownMenu,
@@ -20,7 +19,6 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { logoutUser } from "@/lib/actions/auth.actions"
-import { Button } from "./ui/button"
 
 type NavItem = {
     href: string
@@ -65,7 +63,10 @@ function initials(name: string) {
         .toUpperCase()
 }
 
-const AppShell = () => {
+const AppShell = ({ user, children }: {
+    user: { name: string, email: string, currency: string },
+    children: React.ReactNode
+}) => {
     const pathname = usePathname()
 
     return (
@@ -146,13 +147,87 @@ const AppShell = () => {
             </aside>
 
             {/* Mobile Topbar */}
-            <header></header>
+            <header className="md:hidden sticky top-0 z-99 flex items-center justify-between h-14 px-4 border-b bg-background/96 backdrop-blur">
+                {/* Logo */}
+                <div className="flex items-center gap-2">
+                    <Image src="/logo2.png" width={28} height={28} alt="Logo Spendfy" className="rounded-sm" />
+                    <span className="font-bold text-lg tracking-wide">Spendfy</span>
+                </div>
+
+                {/* Profile */}
+                <div className="px-3 py-3 border-t">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-sm px-2 py-2 text-left hover:bg-sidebar-accent">
+                            <span className="text-md text-muted-foreground font-medium truncate">Lutung</span>
+                            <Avatar className="size-8">
+                                <AvatarFallback className="bg-linear-to-br from-emerald-500 to-teal-600 text-white text-xs font-medium">FA</AvatarFallback>
+                            </Avatar>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuGroup>
+                                <DropdownMenuLabel className="font-normal space-y-1">
+                                    <p className="text-sm font-medium">Lutung</p>
+                                    <p className="text-sm text-muted-foreground">Lutung@gmail.com</p>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                    <Link className="flex gap-2 items-center justify-center py-1" href='/panduan'>
+                                        <CircleQuestionMark className="size-4" />
+                                        Panduan
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <a href='#' target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center justify-center py-1">
+                                        <PhoneForwarded className="size-4" />Hubungi
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem variant="destructive">
+                                    <button className="flex items-center gap-3 py-1" onClick={logoutUser}>
+                                        <LogOutIcon />
+                                        Sign Out
+                                    </button>
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </header>
 
             {/* Content */}
-            <main></main>
+            <main className="pb-24 md:pb-0 md:pl-64">
+                <div className="mx-auto max-w-full px-4 py-6 md:px-8 md:py-8">{children}</div>
+            </main>
 
             {/* Mobile bottom bar */}
-            <nav></nav>
+            <nav className="md:hidden fixed bottom-4 z-99 inset-x-3 rounded-2xl border bg-bakcground/95 backdrop-blur shadow-lg shadow-black/5">
+                <div className="grid grid-cols-5">
+                    {
+                        NAV_GROUPS.map((item, index) => {
+                            const active = pathname.startsWith(item.href)
+                            const Icon = item.icon
+
+                            return (<Link
+                                key={index}
+                                href={item.href}
+                                className={cn(
+                                    "flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-transform active:scale-95",
+                                    active ? 'text-emerald-600' : 'text-muted-foreground'
+                                )}>
+                                <span className={cn(
+                                    "flex items-center justify-center rounded-full size-8 transition-colors",
+                                    active &&
+                                    "bg-linear-to-br from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-600/30"
+                                )}>
+                                    <Icon className="size-4.5" />
+                                </span>
+                                {item.lable}
+                            </Link>
+                            )
+                        })
+                    }
+                </div>
+            </nav>
         </div>
     )
 }
