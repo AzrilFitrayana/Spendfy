@@ -123,15 +123,15 @@ const AppShell = ({ user, children }: {
                     <DropdownMenu>
                         <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-sm px-2 py-2 text-left hover:bg-sidebar-accent">
                             <Avatar className="size-8">
-                                <AvatarFallback className="bg-linear-to-br from-emerald-500 to-teal-600 text-white text-xs font-medium">FA</AvatarFallback>
+                                <AvatarFallback className="bg-linear-to-br from-emerald-500 to-teal-600 text-white text-xs font-medium">{initials(user.name)}</AvatarFallback>
                             </Avatar>
-                            <span className="text-md text-muted-foreground font-medium truncate">Lutung</span>
+                            <span className="text-md text-muted-foreground font-medium truncate">{user.name}</span>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuGroup>
                                 <DropdownMenuLabel className="font-normal space-y-1">
-                                    <p className="text-sm font-medium">Lutung</p>
-                                    <p className="text-sm text-muted-foreground">Lutung@gmail.com</p>
+                                    <p className="text-sm font-medium">{user.name}</p>
+                                    <p className="text-sm text-muted-foreground">{user.email}</p>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem variant="destructive">
@@ -158,16 +158,16 @@ const AppShell = ({ user, children }: {
                 <div className="px-3 py-3 border-t">
                     <DropdownMenu>
                         <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-sm px-2 py-2 text-left hover:bg-sidebar-accent">
-                            <span className="text-md text-muted-foreground font-medium truncate">Lutung</span>
+                            <span className="text-md text-muted-foreground font-medium truncate">{user.name}</span>
                             <Avatar className="size-8">
-                                <AvatarFallback className="bg-linear-to-br from-emerald-500 to-teal-600 text-white text-xs font-medium">FA</AvatarFallback>
+                                <AvatarFallback className="bg-linear-to-br from-emerald-500 to-teal-600 text-white text-xs font-medium">{initials(user.name)}</AvatarFallback>
                             </Avatar>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuGroup>
                                 <DropdownMenuLabel className="font-normal space-y-1">
-                                    <p className="text-sm font-medium">Lutung</p>
-                                    <p className="text-sm text-muted-foreground">Lutung@gmail.com</p>
+                                    <p className="text-sm font-medium">{user.name}</p>
+                                    <p className="text-sm text-muted-foreground">{user.email}</p>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
