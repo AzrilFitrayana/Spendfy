@@ -45,6 +45,9 @@ interface GetUserResponse {
   created_at: string;
 }
 
+/**
+ * Konfigurasi cookie autentikasi untuk menyimpan token sesi pengguna.
+ */
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
@@ -52,6 +55,13 @@ const COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 7,
 };
 
+/**
+ * Mendaftarkan pengguna baru ke dalam sistem.
+ *
+ * @param params Data registrasi pengguna yang mencakup nama, email, password, dan mata uang.
+ * @returns Objek yang berisi status keberhasilan dan data pengguna yang terdaftar.
+ * @throws Error jika terjadi kesalahan selama proses registrasi.
+ */
 export const registerUsers = async (params: RegisterUserParams) => {
   try {
     const data = await apiFetch<RegisterUserResponse>(`/auth/register`, {
@@ -74,6 +84,13 @@ export const registerUsers = async (params: RegisterUserParams) => {
   }
 };
 
+/**
+ * Melakukan autentikasi pengguna berdasarkan email dan password.
+ *
+ * @param params Data login pengguna yang mencakup email dan password.
+ * @returns Objek yang berisi status keberhasilan dan data pengguna yang terautentikasi.
+ * @throws Error jika terjadi kesalahan selama proses login.
+ */
 export const loginUsers = async (params: LoginUserParams) => {
   try {
     const data = await apiFetch<LoginUserResponse>("/auth/login", {
@@ -96,6 +113,13 @@ export const loginUsers = async (params: LoginUserParams) => {
   }
 };
 
+/**
+ * Mengambil data pengguna yang sedang terautentikasi.
+ *
+ * @returns Data pengguna yang sedang login.
+ * @throws {Error} Redirect ke halaman login jika token autentikasi tidak ditemukan.
+ * @throws {Error} Error jika terjadi kesalahan saat memproses permintaan.
+ */
 export const getUser = async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
@@ -115,6 +139,11 @@ export const getUser = async () => {
   return data;
 };
 
+/**
+ * Menghapus sesi pengguna saat ini dan mengalihkan ke halaman login.
+ *
+ * @throws {Error} Redirect ke halaman login setelah sesi berhasil dihapus.
+ */
 export const logoutUser = async () => {
   const cookieStore = await cookies();
   cookieStore.delete("token");
