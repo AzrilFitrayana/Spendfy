@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { CategoriesForm } from "@/components/categories/CategoriesForm"
 import { CategoryList } from "@/components/categories/CategoryList"
 import { toast } from "sonner"
@@ -16,7 +16,7 @@ const Categories = () => {
     const [categories, setCategories] = useState<Category[]>([])
     const [loading, setLoading] = useState(true)
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const res = await getCategories()
             if (res.success && res.data) {
@@ -27,10 +27,28 @@ const Categories = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
     useEffect(() => {
-        fetchCategories()
+        let ignore = false
+
+        getCategories()
+            .then((res) => {
+                if (ignore) return
+                if (res.success && res.data) {
+                    setCategories(res.data)
+                }
+            })
+            .catch((error) => {
+                if (!ignore) console.error("Failed to load categories:", error)
+            })
+            .finally(() => {
+                if (!ignore) setLoading(false)
+            })
+
+        return () => {
+            ignore = true
+        }
     }, [])
 
     const handleSubmit = async (data: { name: string; type: string; icon: string; color: string }) => {
